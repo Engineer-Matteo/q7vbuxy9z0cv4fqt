@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opleidingsonderdelen</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Opleidingsonderdelen</h1>
+    <div class="stripe"></div>
+  </header>
+
+  <main>
+    <a class="back-link" href="../index.html">&larr; Terug naar overzicht</a>
+    <h2>Vakkenlijst</h2>
+
+    <input
+      type="text"
+      id="course-search"
+      class="search-box"
+      placeholder="Search a course..."
+      aria-label="Search courses"
+    >
+
+    <div id="no-results" class="empty-msg" style="display:none;">
+      Niets teruggevonden.
+    </div>
+
+    <!--
+      EDIT BELOW: each .entry-card is one course.
+      Copy/paste the block and change the text to add or remove courses.
+      The title and description are both searchable.
+    -->
+
+    <div class="entry-card course-item">
+      <div class="title">Example Course Name</div>
+      <div class="meta">
+        A short explanation of what this course is about, what topics it
+        covers, and any other useful info goes here.
+      </div>
+    </div>
+
+    <div class="entry-card course-item">
+      <div class="title">Another Course</div>
+      <div class="meta">
+        Another short explanation goes here, describing the content of
+        this course.
+      </div>
+    </div>
+
+    <!-- Add more courses as needed -->
+
+  </main>
+
+  <div class="access-bar">
+    <button id="font-dec" aria-label="Decrease text size">A−</button>
+    <span>Tekst grootte</span>
+    <button id="font-inc" aria-label="Increase text size">A+</button>
+  </div>
+
+  <script src="../script.js"></script>
+  <script>
+    setupSearch('course-search', '.course-item', 'no-results');
+  </script>
+</body>
+</html>

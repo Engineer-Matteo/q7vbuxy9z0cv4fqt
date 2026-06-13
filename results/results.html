@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resultaten</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Resultaten</h1>
+    <div class="stripe"></div>
+  </header>
+
+  <main>
+    <a class="back-link" href="../index.html">&larr; Terug naar homepagina</a>
+    <h2>Resultaten</h2>
+
+    <input
+      type="text"
+      id="score-search"
+      class="search-box"
+      placeholder="Zoek een vak..."
+      aria-label="Search courses"
+    >
+
+    <div id="no-results" class="empty-msg" style="display:none;">
+      Niets teruggevonden.
+    </div>
+
+    <div id="results-list">
+      <div class="empty-msg">Laden...</div>
+    </div>
+
+  </main>
+
+  <div class="access-bar">
+    <button id="font-dec" aria-label="Decrease text size">A−</button>
+    <span>Tekst grootte</span>
+    <button id="font-inc" aria-label="Increase text size">A+</button>
+  </div>
+
+  <script src="../script.js"></script>
+  <script>
+    setupSearch('score-search', '.score-item', 'no-results');
+  </script>
+  <script>
+    loadCSVList('results.csv', 'results-list', function (row) {
+      var card = document.createElement('div');
+      card.className = 'entry-card score-item';
+ 
+      var title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = row.course;
+ 
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      var metaText = 'Score: ' + row.grade + ' / 20 \u00b7 ' + row.period;
+      if (row.notes) metaText += ' \u00b7 ' + row.notes;
+      meta.textContent = metaText;
+ 
+      card.appendChild(title);
+      card.appendChild(meta);
+      return card;
+    });
+  </script>
+</body>
+</html>
