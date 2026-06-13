@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesrooster</title>
   <link rel="stylesheet" href="../style.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#003399">
 </head>
 <body>
   <header class="top">
@@ -16,6 +21,12 @@
     <a class="back-link" href="../index.html">&larr; Terug naar homepagina</a>
     <h2>Wekelijkse uurrooster</h2>
 
+    <div class="week-nav">
+      <button id="prev-week" aria-label="Vorige week">&larr;</button>
+      <span id="week-label">Laden...</span>
+      <button id="next-week" aria-label="Volgende week">&rarr;</button>
+    </div>
+ 
     <div id="timetable-container">
       <div class="empty-msg">Laden...</div>
     </div>
@@ -23,14 +34,14 @@
   </main>
 
   <div class="access-bar">
-    <button id="font-dec" aria-label="Decrease text size">A−</button>
+    <button id="font-dec" aria-label="Tekst kleiner">A−</button>
     <span>Tekst grootte</span>
-    <button id="font-inc" aria-label="Increase text size">A+</button>
+    <button id="font-inc" aria-label="Tekst groter">A+</button>
   </div>
 
   <script src="../script.js"></script>
   <script>
-    loadTimetable('classes.csv', 'timetable-container');
+    loadTimetable('classes.csv', 'timetable-container', 'week-label', 'prev-week', 'next-week');
   </script>
 </body>
 </html>

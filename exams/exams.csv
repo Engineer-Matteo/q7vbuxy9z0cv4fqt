@@ -1,4 +1,48 @@
-course,date,time,room,
-Wiskundige Analyse II - theorie (mondeling),15 juni 2026,14:00 - 17:00,G.6.52,
-Wiskundige Analyse II - oefeningen,16 juni 2026,08:00 - 12:00,L.0 Groene Zaal,
-Chemie en project,22 juni 2026,08:00 - 12:00,D.0.02 en D.0.03,
+date,day,start,end,course,type,room
+2024-10-29,Tuesday,07:50,11:00,Wiskundige technieken Workshop Wiskunde,Tussentijdse evaluatie,D.0.08
+2024-10-30,Wednesday,08:00,12:00,Chemie: bouwstenen van de materie,Tussentijdse evalutie,Q.D
+2024-12-13,Friday,13:00,16:00,Examen MATLAB,,K.1.24
+2025-01-08,Wednesday,08:00,12:00,Chemie: bouwstenen van de materie,,"D.0.02, D.0.03, D.0.07"
+2025-01-08,Wednesday,13:00,16:00,Chemie: bouwstenen van de materie (oefeningen),,"D.0.02, D.0.03, D.0.05"
+2025-01-10,Friday,09:00,12:00,Science Lab (meten en experimenteren),,"D.0.03, D.0.08"
+2025-01-14,Tuesday,08:00,12:00,Wiskundige analyse I,,"Q.A, Q.B, Q.C, Q.D"
+2025-01-21,Tuesday,08:00,12:00,"Lineaire algebra: stelsels, matrices en afbeeldingen",,D.0.03
+2025-01-24,Friday,08:00,12:00,Mechanica: basisconcepten,,Q. Ontvangstruimte Nelson Mandela
+2025-01-29,Wednesday,09:00,12:00,Programmeerconcepten,,L.0.Groene zaal
+2025-01-30,Thursday,09:00,12:00,Programmeerconcepten: oefeningen,,"K.3.71, K.3.73, K.3.75, K.3.76"
+2025-06-02,Monday,08:00,12:00,Fysica (schriftelijk),,L.0.Groene zaal
+2025-06-05,Thursday,09:00,12:00,Softwareontwikkeling en AI-algoritmes (mondeling),,K.3.76
+2025-06-06,Friday,13:00,16:00,Softwareontwikkeling en AI-algoritmes (schriftelijk),,"K.3.71, K.3.73, K.3.75, K.3.76"
+2025-06-12,Thursday,13:30,17:30,Mechanica: dynamica en statica (mondeling),,Z.1.52
+2025-06-14,Saturday,08:00,12:00,Mechanica: dynamica en statica,,L.0.Groene zaal
+2025-06-17,Tuesday,09:00,12:00,Wiskundige analyse II (schriftelijk),,P2.0.04
+2025-06-18,Wednesday,14:00,18:00,Wiskundige analyse II (mondeling),,G.6.52
+2025-06-23,Monday,08:00,12:00,Chemie en project (schriftelijk),,"D.0.05, D.0.08"
+2025-08-19,Tuesday,08:00,12:00,Wiskundige Analyse I,Schriftelijk,P2.0.03
+2025-08-20,Wednesday,09:00,12:00,Wiskundige Analyse II,Schriftelijk,Q. Ontvangstruimte Nelson Mandela
+2025-08-22,Friday,14:00,18:00,Wiskundige Analyse II,Mondeling,E.0.07
+2025-08-25,Monday,08:00,12:00,Fysica,Schriftelijk,"I.2.02, I.2.03"
+2025-08-27,Wednesday,08:30,12:30,Mechanica: dynamica en statica,Mondeling,Bureau Tom Verstraten
+2025-08-29,Friday,08:00,12:00,Mechanica: dynamica en statica,Schriftelijk,D.0.02
+2025-09-01,Monday,08:30,12:00,Chemie en project,Schriftelijk,D.0.03
+2025-09-02,Tuesday,08:00,12:00,Mechanica: basisconcepten,Schriftelijk,Q. Ontvangstruimte Nelson Mandela
+2025-09-05,Friday,08:00,12:00,"Lineaire algebra: stelsels, matrices en afbeeldingen",Schriftelijk,P2.0.03
+2026-01-06,Tuesday,13:30,15:30,Mechanica met ontwerpproject [mondeling],,Z bureau prof
+2026-01-08,Thursday,08:00,12:00,Mechanica met ontwerpproject [schriftelijk],,P2.0.03
+2026-01-13,Tuesday,08:00,12:00,Wiskundige Analyse I,,"P2.0.04, P2.0.05"
+2026-01-17,Saturday,11:00,11:15,Mechanica met ontwerpproject (Inventor),,Microsoft Teams
+2026-01-20,Tuesday,08:00,12:00,Lineaire Algebra,,P2
+2026-01-21,Wednesday,09:00,12:00,Toegepaste elektriciteit [schriftelijk],,I.2.01 en I.2.02
+2026-01-23,Friday,08:00,12:00,Mechanica: basisconcepten,,Nelson Mandela zaal
+2026-01-31,Saturday,13:00,17:00,Toegepaste elektriciteit [mondeling],,K6 (ELEC)
+2026-06-01,Monday,07:45,12:00,Fysica (schriftelijk),,L.0.Groene Zaal
+2026-06-08,Monday,13:30,16:30,Mechanica: dynamica en statica (mondeling),,"Gebouw Z, VUB - Vrije Universiteit Brussel Building Z, Pleinlaan, 1050 Elsene, België"
+2026-06-10,Wednesday,13:00,17:00,Toegepaste Statistiek (mondeling) [wordt pas op 22 mei bevestigt],,Bureau Dr. Ir. Gerd Vandersteen
+2026-06-13,Saturday,08:00,12:00,Mechanica: dynamica en statica (schriftelijk),,Qe
+2026-06-15,Monday,14:00,18:00,Wiskundige Analyse II (mondeling),,G.6.52
+2026-06-16,Tuesday,08:00,12:00,Wiskundige Analyse II (schriftelijk),,L.0 Groene zaal
+2026-06-22,Monday,08:00,12:00,Chemie en project (schriftelijk),,"D.0.02, D.0.03"
+2026-08-17,Monday,08:30,17:30,Mechanica met ontwerpproject [theoriedeel] (mondeling),,Bureau prof. dr. ir. Tom Verstraten
+2026-08-18,Tuesday,08:00,12:00,Wiskundige Analyse I (schriftelijk),,
+2026-08-21,Friday,08:00,12:00,Mechanica met ontwerpproject [oefeningendeel] (schriftelijk),,
+2026-08-25,Tuesday,08:00,12:00,Lineaire Algebra (schriftelijk),,

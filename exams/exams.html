@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Examenrooster</title>
   <link rel="stylesheet" href="../style.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#003399">
 </head>
 <body>
   <header class="top">
@@ -23,31 +28,14 @@
   </main>
 
   <div class="access-bar">
-    <button id="font-dec" aria-label="Decrease text size">A−</button>
+    <button id="font-dec" aria-label="Tekst kleiner">A−</button>
     <span>Tekst grootte</span>
-    <button id="font-inc" aria-label="Increase text size">A+</button>
+    <button id="font-inc" aria-label="Tekst groter">A+</button>
   </div>
 
   <script src="../script.js"></script>
   <script>
-    loadCSVList('exams.csv', 'exams-list', function (row) {
-      var card = document.createElement('div');
-      card.className = 'entry-card';
- 
-      var title = document.createElement('div');
-      title.className = 'title';
-      title.textContent = row.course;
- 
-      var meta = document.createElement('div');
-      meta.className = 'meta';
-      var metaText = row.date + ' \u00b7 ' + row.time;
-      if (row.room) metaText += ' \u00b7 ' + row.room;
-      meta.textContent = metaText;
- 
-      card.appendChild(title);
-      card.appendChild(meta);
-      return card;
-    });
+    loadDatedList('exams.csv', 'exams-list');
   </script>
 </body>
 </html>

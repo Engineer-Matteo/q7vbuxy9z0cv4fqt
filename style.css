@@ -192,6 +192,97 @@ h2 {
   padding: 1em 0;
 }
 
+/* Grade bar inside result cards */
+.grade-bar-track {
+  margin-top: 0.7em;
+  height: 14px;
+  background: #E5E8F0;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.grade-bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.4s ease;
+}
+
+.grade-bar-fail   { background: #D32F2F; }
+.grade-bar-low    { background: #FF6600; }
+.grade-bar-mid    { background: #FFC107; }
+.grade-bar-good   { background: #8BC34A; }
+.grade-bar-great  { background: #2E7D32; }
+
+/* Past entries toggle (exams page) */
+.past-section {
+  margin-top: 1.5em;
+  border-top: 2px dashed #DDE3F0;
+  padding-top: 1.2em;
+}
+
+.past-toggle {
+  display: block;
+  width: 100%;
+  background: var(--card-bg);
+  color: var(--vub-blue);
+  border: 2px solid var(--vub-blue);
+  border-radius: 12px;
+  padding: 0.8em 1em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.past-toggle:active { background: #EEF2FB; }
+
+.past-entries {
+  margin-top: 1em;
+}
+
+/* Week navigation */
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  margin-bottom: 1.2em;
+}
+
+.week-nav button {
+  background: var(--vub-orange);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  font-size: 1.4em;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.week-nav button:active { background: #cc5200; }
+
+#week-label {
+  font-weight: 700;
+  color: var(--vub-blue);
+  font-size: 1em;
+  text-align: center;
+  flex: 1;
+}
+
+.timetable-col-header .col-day {
+  display: block;
+  font-weight: 700;
+}
+
+.timetable-col-header .col-date {
+  display: block;
+  font-weight: 400;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
 /* Timetable grid */
 .timetable {
   display: flex;
