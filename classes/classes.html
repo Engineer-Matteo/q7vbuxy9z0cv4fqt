@@ -21,13 +21,22 @@
     <a class="back-link" href="../index.html">&larr; Terug naar homepagina</a>
     <h2>Wekelijkse uurrooster</h2>
 
-    <div class="week-nav">
+    <div class="view-toggle">
+      <button id="view-calendar" type="button" class="active">Kalender</button>
+      <button id="view-list" type="button">Lijst</button>
+    </div>
+
+    <div class="week-nav" id="calendar-controls">
       <button id="prev-week" aria-label="Vorige week">&larr;</button>
       <span id="week-label">Laden...</span>
       <button id="next-week" aria-label="Volgende week">&rarr;</button>
     </div>
  
     <div id="timetable-container">
+      <div class="empty-msg">Laden...</div>
+    </div>
+
+    <div id="classes-list" style="display:none;">
       <div class="empty-msg">Laden...</div>
     </div>
 
@@ -41,7 +50,15 @@
 
   <script src="../script.js"></script>
   <script>
-    loadTimetable('classes.csv', 'timetable-container', 'week-label', 'prev-week', 'next-week');
+    setupClassViewToggle(
+      'classes.csv',
+      'timetable-container',
+      'classes-list',
+      'week-label',
+      'prev-week',
+      'next-week',
+      'calendar-controls'
+    );
   </script>
 </body>
 </html>

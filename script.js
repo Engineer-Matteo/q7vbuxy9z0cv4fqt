@@ -99,6 +99,37 @@ function splitCSVLine(line) {
 
 // Date-aware timetable with week navigation.
 // Expected CSV columns: date (YYYY-MM-DD), day, start, end, course, type, room
+function setupClassViewToggle(csvPath, timetableContainerId, listContainerId, labelId, prevId, nextId, controlsId) {
+  var calendarBtn = document.getElementById('view-calendar');
+  var listBtn = document.getElementById('view-list');
+  var timetableEl = document.getElementById(timetableContainerId);
+  var listEl = document.getElementById(listContainerId);
+  var controlsEl = document.getElementById(controlsId);
+  if (!calendarBtn || !listBtn || !timetableEl || !listEl) return;
+
+  function show(view) {
+    if (view === 'list') {
+      timetableEl.style.display = 'none';
+      listEl.style.display = '';
+      if (controlsEl) controlsEl.style.display = 'none';
+      calendarBtn.classList.remove('active');
+      listBtn.classList.add('active');
+    } else {
+      timetableEl.style.display = '';
+      listEl.style.display = 'none';
+      if (controlsEl) controlsEl.style.display = '';
+      calendarBtn.classList.add('active');
+      listBtn.classList.remove('active');
+    }
+  }
+
+  calendarBtn.addEventListener('click', function () { show('calendar'); });
+  listBtn.addEventListener('click', function () { show('list'); });
+  loadTimetable(csvPath, timetableContainerId, labelId, prevId, nextId);
+  loadDatedList(csvPath, listContainerId);
+  show('calendar');
+}
+
 function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
   var container = document.getElementById(containerId);
   if (!container) return;
@@ -135,6 +166,32 @@ function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
         return y + '-' + m + '-' + day;
       }
 
+      function parseTime(time) {
+        if (!time) return null;
+        var parts = time.split(':');
+        if (parts.length !== 2) return null;
+        var hours = parseInt(parts[0], 10);
+        var minutes = parseInt(parts[1], 10);
+        if (isNaN(hours) || isNaN(minutes)) return null;
+        return { hours: hours, minutes: minutes };
+      }
+
+      function assignColumns(events) {
+        var columns = [];
+        events.forEach(function (event) {
+          for (var i = 0; i < columns.length; i++) {
+            if (event.startMinutes >= columns[i][columns[i].length - 1].endMinutes) {
+              columns[i].push(event);
+              event.column = i;
+              return;
+            }
+          }
+          event.column = columns.length;
+          columns.push([event]);
+        });
+        return columns.length;
+      }
+
       function renderWeek() {
         var monday = getMonday(weekOffset);
         var weekDays = [];
@@ -169,69 +226,106 @@ function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
           return;
         }
 
-        // Collect all start times this week and sort them
-        var timeSet = {};
-        weekRows.forEach(function (r) { timeSet[r.start] = true; });
-        var times = Object.keys(timeSet).sort();
-
-        var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
         var grid = document.createElement('div');
         grid.className = 'timetable';
 
         activeDays.forEach(function (dayDate) {
           var ymd = toYMD(dayDate);
+          var dayRows = weekRows.filter(function (r) { return r.date === ymd; });
+
           var col = document.createElement('div');
           col.className = 'timetable-col';
 
           var header = document.createElement('div');
           header.className = 'timetable-col-header';
           header.innerHTML =
-            '<span class="col-day">' + dayNames[dayDate.getDay()] + '</span>' +
+            '<span class="col-day">' + dayDate.toLocaleDateString('nl-BE', { weekday: 'long' }) + '</span>' +
             '<span class="col-date">' + dayDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' }) + '</span>';
           col.appendChild(header);
 
-          times.forEach(function (time) {
-            // Multiple events can share a start time on the same day
-            var matches = weekRows.filter(function (r) { return r.date === ymd && r.start === time; });
+          var body = document.createElement('div');
+          body.className = 'timetable-col-body';
 
-            var slot = document.createElement('div');
-            slot.className = matches.length ? 'timetable-slot' : 'timetable-empty-slot';
+          var gridLines = document.createElement('div');
+          gridLines.className = 'timetable-day-grid';
+          for (var h = 0; h < 14; h++) {
+            gridLines.appendChild(document.createElement('div'));
+          }
+          body.appendChild(gridLines);
 
-            matches.forEach(function (match) {
-              var event = document.createElement('div');
-              event.className = 'timetable-event';
+          var dayStart = 8 * 60;
+          var dayEnd = 22 * 60;
 
-              var courseEl = document.createElement('span');
-              courseEl.className = 'event-course';
-              courseEl.textContent = match.course;
-              event.appendChild(courseEl);
+          var events = dayRows.map(function (match) {
+            var start = parseTime(match.start);
+            var end = parseTime(match.end);
+            if (!start || !end) return null;
+            var startMinutes = start.hours * 60 + start.minutes;
+            var endMinutes = end.hours * 60 + end.minutes;
+            if (endMinutes <= dayStart || startMinutes >= dayEnd) return null;
+            return {
+              row: match,
+              startMinutes: Math.max(dayStart, startMinutes),
+              endMinutes: Math.min(dayEnd, endMinutes)
+            };
+          }).filter(Boolean);
 
-              var timeEl = document.createElement('span');
-              timeEl.className = 'event-time';
-              timeEl.textContent = match.start + ' – ' + match.end;
-              event.appendChild(timeEl);
-
-              if (match.type) {
-                var typeEl = document.createElement('span');
-                typeEl.className = 'event-type';
-                typeEl.textContent = match.type;
-                event.appendChild(typeEl);
-              }
-
-              if (match.room) {
-                var roomEl = document.createElement('span');
-                roomEl.className = 'event-room';
-                roomEl.textContent = match.room;
-                event.appendChild(roomEl);
-              }
-
-              slot.appendChild(event);
-            });
-
-            col.appendChild(slot);
+          events.sort(function (a, b) {
+            if (a.startMinutes !== b.startMinutes) return a.startMinutes - b.startMinutes;
+            return a.endMinutes - b.endMinutes;
           });
 
+          var columns = assignColumns(events);
+
+          events.forEach(function (eventInfo) {
+            var top = eventInfo.startMinutes - dayStart;
+            var height = Math.max(64, eventInfo.endMinutes - eventInfo.startMinutes);
+            var smallGap = 6;
+            var visualTop = top + 2;
+            var visualHeight = Math.max(52, height - smallGap);
+
+            var match = eventInfo.row;
+            var event = document.createElement('div');
+            event.className = 'timetable-event';
+            event.style.top = visualTop + 'px';
+            event.style.height = visualHeight + 'px';
+            event.style.zIndex = eventInfo.column + 1;
+
+            if (columns > 1) {
+              var widthPercent = 100 / columns;
+              event.style.left = 'calc(0.75em + ' + (eventInfo.column * widthPercent) + '%)';
+              event.style.width = 'calc(' + widthPercent + '% - 1em)';
+              event.style.right = 'auto';
+            }
+
+            var courseEl = document.createElement('span');
+            courseEl.className = 'event-course';
+            courseEl.textContent = match.course;
+            event.appendChild(courseEl);
+
+            var timeEl = document.createElement('span');
+            timeEl.className = 'event-time';
+            timeEl.textContent = match.start + ' – ' + match.end;
+            event.appendChild(timeEl);
+
+            if (match.type) {
+              var typeEl = document.createElement('span');
+              typeEl.className = 'event-type';
+              typeEl.textContent = match.type;
+              event.appendChild(typeEl);
+            }
+
+            if (match.room) {
+              var roomEl = document.createElement('span');
+              roomEl.className = 'event-room';
+              roomEl.textContent = match.room;
+              event.appendChild(roomEl);
+            }
+
+            body.appendChild(event);
+          });
+
+          col.appendChild(body);
           grid.appendChild(col);
         });
 

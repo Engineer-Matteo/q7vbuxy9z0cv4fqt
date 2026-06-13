@@ -240,6 +240,28 @@ h2 {
 }
 
 /* Week navigation */
+.view-toggle {
+  display: flex;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+
+.view-toggle button {
+  flex: 1;
+  border: 2px solid var(--vub-blue);
+  background: var(--card-bg);
+  color: var(--vub-blue);
+  border-radius: 12px;
+  padding: 0.85em 0.95em;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.view-toggle button.active {
+  background: var(--vub-blue);
+  color: white;
+}
+
 .week-nav {
   display: flex;
   align-items: center;
@@ -287,15 +309,16 @@ h2 {
 .timetable {
   display: flex;
   overflow-x: auto;
-  border: 2px solid var(--vub-blue);
+  border: 2px solid transparent;
   border-radius: 12px;
   background: var(--card-bg);
 }
 
 .timetable-col {
-  flex: 1 0 110px;
-  min-width: 110px;
-  border-right: 1px solid #DDE3F0;
+  flex: 1 0 180px;
+  min-width: 180px;
+  position: relative;
+  border-right: 1px solid transparent;
 }
 
 .timetable-col:last-child { border-right: none; }
@@ -309,21 +332,51 @@ h2 {
   font-size: 0.95em;
   position: sticky;
   top: 0;
+  z-index: 1;
 }
 
-.timetable-slot {
-  border-bottom: 1px solid #EEF2FB;
-  padding: 0.5em 0.4em;
-  min-height: 70px;
+.timetable-col-body {
+  position: relative;
+  min-height: 840px;
+}
+
+.timetable-day-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: repeat(14, 1fr);
+  pointer-events: none;
+}
+
+.timetable-day-grid > div {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .timetable-event {
+  position: absolute;
+  left: 0.75em;
+  right: 0.75em;
   background: #EEF2FB;
   border-left: 4px solid var(--vub-orange);
-  border-radius: 8px;
-  padding: 0.5em 0.5em;
-  font-size: 0.85em;
+  border-radius: 14px;
+  padding: 0.5em 0.65em;
+  font-size: 0.9em;
   line-height: 1.35;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.2em;
+}
+
+.timetable-event .event-course,
+.timetable-event .event-time,
+.timetable-event .event-type,
+.timetable-event .event-room {
+  overflow-wrap: anywhere;
 }
 
 .timetable-event .event-course {
@@ -342,8 +395,4 @@ h2 {
 .timetable-event .event-room {
   display: block;
   color: var(--text-soft);
-}
-
-.timetable-empty-slot {
-  min-height: 70px;
 }
