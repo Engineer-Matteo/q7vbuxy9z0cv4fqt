@@ -97,6 +97,37 @@ function splitCSVLine(line) {
   return result;
 }
 
+function loadAverageScore(csvPath, badgeId) {
+  fetch(csvPath + '?v=' + Date.now())
+    .then(function (response) {
+      if (!response.ok) throw new Error('CSV not found: ' + csvPath);
+      return response.text();
+    })
+    .then(function (text) {
+      var rows = parseCSV(text);
+      var total = 0;
+      var count = 0;
+      rows.forEach(function (r) {
+        var score = parseFloat(r.grade);
+        if (!isNaN(score)) {
+          total += score;
+          count += 1;
+        }
+      });
+      var badge = document.getElementById(badgeId);
+      if (!badge) return;
+      if (count === 0) {
+        badge.textContent = 'gem. 0.0 /20';
+      } else {
+        badge.textContent = 'gem. ' + (total / count).toFixed(1) + ' /20';
+      }
+    })
+    .catch(function () {
+      var badge = document.getElementById(badgeId);
+      if (badge) badge.textContent = 'gem. -- /20';
+    });
+}
+
 // Date-aware timetable with week navigation.
 // Expected CSV columns: date (YYYY-MM-DD), day, start, end, course, type, room
 function setupClassViewToggle(csvPath, timetableContainerId, listContainerId, labelId, prevId, nextId, controlsId) {
@@ -176,6 +207,47 @@ function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
         return { hours: hours, minutes: minutes };
       }
 
+      function getWeekKey(date) {
+        var d = new Date(date.getTime());
+        var day = d.getDay();
+        var diff = (day === 0 ? -6 : 1 - day);
+        d.setDate(d.getDate() + diff);
+        d.setHours(0, 0, 0, 0);
+        return d.toISOString().slice(0, 10);
+      }
+
+      function getMonthKey(date) {
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+      }
+
+      function updateAverageWeeklyHours(rows, monthKey) {
+        if (!rows.length) return;
+        var totalMinutes = 0;
+        var weekSet = {};
+
+        rows.forEach(function (r) {
+          var date = new Date(r.date);
+          if (isNaN(date.getTime())) return;
+          if (monthKey && getMonthKey(date) !== monthKey) return;
+          var start = parseTime(r.start);
+          var end = parseTime(r.end);
+          if (!start || !end) return;
+          totalMinutes += Math.max(0, (end.hours * 60 + end.minutes) - (start.hours * 60 + start.minutes));
+          weekSet[getWeekKey(date)] = true;
+        });
+
+        var weekCount = Object.keys(weekSet).length;
+        var badge = document.getElementById('avg-hours-week');
+        if (!badge) return;
+        if (!weekCount) {
+          badge.textContent = 'gem. 0.0 u/week';
+          return;
+        }
+
+        var avgHours = totalMinutes / weekCount / 60;
+        badge.textContent = 'gem. ' + avgHours.toFixed(1) + ' u/week';
+      }
+
       function assignColumns(events) {
         var columns = [];
         events.forEach(function (event) {
@@ -192,8 +264,81 @@ function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
         return columns.length;
       }
 
+      function showEventDetails(match) {
+        var overlay = document.createElement('div');
+        overlay.className = 'event-details-overlay';
+        overlay.tabIndex = -1;
+
+        var panel = document.createElement('div');
+        panel.className = 'event-details-panel';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+
+        var closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'event-details-close';
+        closeButton.setAttribute('aria-label', 'Sluiten');
+        closeButton.innerHTML = '&times;';
+        panel.appendChild(closeButton);
+
+        var title = document.createElement('div');
+        title.className = 'event-details-title';
+        title.textContent = match.course || 'Les';
+        panel.appendChild(title);
+
+        function addDetail(label, value) {
+          if (!value) return;
+          var row = document.createElement('div');
+          row.className = 'event-details-row';
+
+          var labelEl = document.createElement('span');
+          labelEl.className = 'event-details-label';
+          labelEl.textContent = label;
+          row.appendChild(labelEl);
+
+          var valueEl = document.createElement('span');
+          valueEl.className = 'event-details-value';
+          valueEl.textContent = value;
+          row.appendChild(valueEl);
+
+          panel.appendChild(row);
+        }
+
+        var dateText = match.date ? new Date(match.date).toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+        addDetail('Dag', dateText);
+        addDetail('Tijd', (match.start || '') + ' – ' + (match.end || ''));
+        addDetail('Lestype', match.type);
+        addDetail('Lokaal', match.room);
+
+        if (match.course) {
+          var info = document.createElement('div');
+          info.className = 'event-details-note';
+          info.textContent = 'Klik buiten het vak of op × om te sluiten.';
+          panel.appendChild(info);
+        }
+
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        function closeDetails() {
+          if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+          }
+        }
+
+        closeButton.addEventListener('click', closeDetails);
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) {
+            closeDetails();
+          }
+        });
+      }
+
       function renderWeek() {
         var monday = getMonday(weekOffset);
+        var monthKey = monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0');
+        updateAverageWeeklyHours(allRows, monthKey);
+
         var weekDays = [];
         for (var i = 0; i < 7; i++) {
           var d = new Date(monday);
@@ -322,6 +467,18 @@ function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
               event.appendChild(roomEl);
             }
 
+            event.tabIndex = 0;
+            event.setAttribute('role', 'button');
+            event.addEventListener('click', function () {
+              showEventDetails(match);
+            });
+            event.addEventListener('keydown', function (e) {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                showEventDetails(match);
+              }
+            });
+
             body.appendChild(event);
           });
 
@@ -338,6 +495,8 @@ function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
       var nextBtn = document.getElementById(nextId);
       if (prevBtn) prevBtn.addEventListener('click', function () { weekOffset--; renderWeek(); });
       if (nextBtn) nextBtn.addEventListener('click', function () { weekOffset++; renderWeek(); });
+      var todayBtn = document.getElementById('today-week');
+      if (todayBtn) todayBtn.addEventListener('click', function () { weekOffset = 0; renderWeek(); });
     })
     .catch(function (err) {
       container.innerHTML = '<div class="empty-msg">Kon gegevens niet laden (' + err.message + ').</div>';

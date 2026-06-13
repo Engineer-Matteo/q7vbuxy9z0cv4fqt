@@ -14,10 +14,11 @@
 <body>
   <header class="top">
     <h1>Lesrooster</h1>
+    <span id="avg-hours-week" class="header-badge">-- u/week</span>
     <div class="stripe"></div>
   </header>
 
-  <main>
+  <main class="wide">
     <a class="back-link" href="../index.html">&larr; Terug naar homepagina</a>
     <h2>Wekelijkse uurrooster</h2>
 
@@ -28,6 +29,7 @@
 
     <div class="week-nav" id="calendar-controls">
       <button id="prev-week" aria-label="Vorige week">&larr;</button>
+      <button id="today-week" type="button" class="today-button">Vandaag</button>
       <span id="week-label">Laden...</span>
       <button id="next-week" aria-label="Volgende week">&rarr;</button>
     </div>

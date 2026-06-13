@@ -14,6 +14,7 @@
 <body>
   <header class="top">
     <h1>Resultaten</h1>
+    <span id="avg-score" class="header-badge">-- /20</span>
     <div class="stripe"></div>
   </header>
 
@@ -48,6 +49,7 @@
   <script src="../script.js"></script>
   <script>
     setupSearch('score-search', '.score-item', 'no-results');
+    loadAverageScore('results.csv', 'avg-score');
   </script>
   <script>
     loadCSVList('results.csv', 'results-list', function (row) {
