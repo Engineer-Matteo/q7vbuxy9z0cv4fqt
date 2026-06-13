@@ -1,0 +1,73 @@
+day,start,end,course,type,room
+Monday,08:00,12:00,Toegepaste elektriciteit,Labo,K.0.03
+Monday,08:00,10:00,Lineaire Algebra,HOC,Q.B
+Monday,08:00,10:00,Toegepaste Statistiek,HOC,B.0.31
+Monday,09:00,12:00,Lineaire Algebra,WPO,D.3.15
+Monday,09:00,13:00,Chemie en project,HOC,G.1.52
+Monday,09:00,12:00,Mechanica: basisconcepten,,D.3.14
+Monday,09:00,11:00,Chemie en project,HOC,Q.B
+Monday,10:00,12:00,Mechanica met ontwerpproject,HOC,D.3.06
+Monday,10:00,12:00,Toegepaste elektriciteit,HOC,D.2.12
+Monday,10:00,12:00,Mechanica: basisconcepten,HOC,K.2.56
+Monday,10:00,12:00,Fysica,WPO,D.3.11
+Monday,11:00,13:00,Fysica,HOC,D.0.02
+Monday,12:00,14:00,Inkijkmoment oefeningenexamen Mechanica met ontwerpproject,,Z eerste verdieping
+Monday,13:00,16:00,Toegepaste elektriciteit,WPO,D.3.12
+Monday,13:00,13:30,Inleiding en algemene uitleg over de programma's,,K.2.56
+Monday,13:45,14:15,Infosessie MACS,,K.2.52
+Monday,14:00,16:00,Toegepaste Statistiek,HOC,I.0.02
+Monday,14:15,14:45,Infosessie Fotonica,,F.9.81
+Monday,14:45,16:15,Infosessie EE,,K 5e verdieping
+Tuesday,08:00,10:00,Mechanica: dynamica en statica,HOC,D.0.02
+Tuesday,08:00,10:00,Fysica,WPO,D.3.14
+Tuesday,08:00,12:00,Toegepaste Statistiek,WPO,K.3.75
+Tuesday,08:00,10:00,Toegepaste elektriciteit,HOC,D.2.23
+Tuesday,08:00,10:00,Wiskundige Analyse II,HOC,D.0.02
+Tuesday,10:00,12:00,Wiskundige Analyse I,HOC,D.0.05
+Tuesday,10:00,12:00,Fysica,HOC,D.0.05
+Tuesday,10:00,12:00,Lineaire Algebra,HOC,D.0.03
+Tuesday,10:00,12:00,Q&A Mechanica met ontwerpproject theorie,,L.2.01
+Tuesday,10:00,12:00,Wiskundige analyse I,HOC,D.0.05
+Tuesday,13:00,16:00,Mechanica: dynamica en statica,,D.3.15
+Tuesday,13:00,17:00,Toegepaste elektriciteit,Labo,K.0.03
+Tuesday,13:00,13:50,Infosessie WE,,Z.1.03 ETEC
+Tuesday,13:00,16:00,Lineaire Algebra,WPO,D.3.06
+Tuesday,13:00,13:50,Infosessie C&M,,G.9 seminarieruimte
+Tuesday,14:00,14:50,Infosessie Bouwkunde,,K.2.56
+Tuesday,14:00,14:50,Infosessie BMIT,,"AI Experience Center: Pleinlaan 9, verdieping -1"
+Wednesday,08:00,10:00,Fysica,HOC,D.0.07
+Wednesday,08:00,12:00,Toegepaste elektriciteit,Labo,K.0.03
+Wednesday,08:00,10:00,Toegepaste elektriciteit,HOC,D.3.16
+Wednesday,08:00,12:00,Toegepaste Elektriciteit,,K.0.03
+Wednesday,10:00,12:00,Wiskundige Analyse II,HOC,D.0.02
+Wednesday,10:00,12:00,Mechanica met ontwerpproject,HOC,D.3.15
+Wednesday,10:00,12:00,Mechanica: basisconcepten,HOC,K.2.56
+Wednesday,13:00,17:00,Wiskundige Analyse I,WPO,E.2.12
+Wednesday,13:00,16:00,Wiskundige Analyse II,WPO,G.1.57
+Wednesday,13:00,14:30,Inkijkmoment examen lineaire algebra,,G.6.60
+Wednesday,15:00,15:20,Inkijkmoment examen  Wiskundige Analyse I,,G.6.60
+Thursday,08:00,10:00,Fysica,HOC,D.0.03
+Thursday,08:00,10:00,Toegepaste elektriciteit,HOC,E.0.07
+Thursday,08:00,12:00,Toegepaste elektriciteit,Labo,K.0.03
+Thursday,08:00,10:00,Q&A Mechanica met ontwerpproject oefeningen,,L.2.01
+Thursday,10:00,12:00,Mechanica: dynamica en statica,HOC,D.0.03
+Thursday,10:00,12:00,Mechanica: basisconcepten,HOC,D.0.07
+Thursday,10:00,12:00,Toegepaste elektriciteit,HOC,K.2.55
+Thursday,10:00,12:00,Toegepaste Statistiek,HOC,Q.D
+Thursday,13:00,18:00,Chemie - Labo Project,,T.2.59 B
+Thursday,13:00,17:00,Mechanica met ontwerpproject,WPO,K.3.76
+Thursday,13:00,15:00,Chemie - Eerste sessie project,WPO,E.2.12
+Thursday,13:00,16:00,Chemie - Presentaties Project,WPO,D.3.15
+Thursday,13:00,18:00,Chemie - Labo,LABO,T.2.59 B
+Thursday,13:00,16:00,Chemie - Oefeningen,WPO,D.3.15
+Thursday,13:00,14:00,Chemie - Tweede sessie project,WPO,D.2.15
+Thursday,14:00,18:00,Mechanica met ontwerpproject,WPO,D.3.10
+Friday,08:00,10:00,Lineaire Algebra,HOC,D.0.03
+Friday,08:00,10:00,Chemie en project,HOC,D.0.03
+Friday,10:00,12:00,Wiskundige Analyse II,HOC,D.0.05
+Friday,10:00,12:00,Wiskundige Analyse I,HOC,Q.D
+Friday,10:00,12:00,Chemie en project,HOC,D.0.05
+Friday,10:00,12:00,Wiskundige analyse I,HOC,D.0.08
+Friday,13:00,16:00,Mechanica: basisconcepten,WPO,E.2.03
+Friday,13:00,15:00,Fysica,WPO,D.3.14
+Friday,13:00,17:00,Wiskundige Analyse I,WPO,E.2.03

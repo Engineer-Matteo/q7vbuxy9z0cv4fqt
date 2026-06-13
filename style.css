@@ -191,3 +191,68 @@ h2 {
   font-style: italic;
   padding: 1em 0;
 }
+
+/* Timetable grid */
+.timetable {
+  display: flex;
+  overflow-x: auto;
+  border: 2px solid var(--vub-blue);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.timetable-col {
+  flex: 1 0 110px;
+  min-width: 110px;
+  border-right: 1px solid #DDE3F0;
+}
+
+.timetable-col:last-child { border-right: none; }
+
+.timetable-col-header {
+  background: var(--vub-blue);
+  color: white;
+  text-align: center;
+  font-weight: 700;
+  padding: 0.6em 0.3em;
+  font-size: 0.95em;
+  position: sticky;
+  top: 0;
+}
+
+.timetable-slot {
+  border-bottom: 1px solid #EEF2FB;
+  padding: 0.5em 0.4em;
+  min-height: 70px;
+}
+
+.timetable-event {
+  background: #EEF2FB;
+  border-left: 4px solid var(--vub-orange);
+  border-radius: 8px;
+  padding: 0.5em 0.5em;
+  font-size: 0.85em;
+  line-height: 1.35;
+}
+
+.timetable-event .event-course {
+  font-weight: 700;
+  color: var(--vub-blue);
+  display: block;
+  margin-bottom: 0.15em;
+}
+
+.timetable-event .event-time {
+  font-weight: 600;
+  display: block;
+}
+
+.timetable-event .event-type,
+.timetable-event .event-room {
+  display: block;
+  color: var(--text-soft);
+}
+
+.timetable-empty-slot {
+  min-height: 70px;
+}

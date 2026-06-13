@@ -14,9 +14,11 @@
 
   <main>
     <a class="back-link" href="../index.html">&larr; Terug naar homepagina</a>
-    <h2>IN AANBOUW</h2>
+    <h2>Wekelijkse uurrooster</h2>
 
-    
+    <div id="timetable-container">
+      <div class="empty-msg">Laden...</div>
+    </div>
 
   </main>
 
@@ -27,5 +29,8 @@
   </div>
 
   <script src="../script.js"></script>
+  <script>
+    loadTimetable('classes.csv', 'timetable-container');
+  </script>
 </body>
 </html>
