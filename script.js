@@ -381,6 +381,9 @@ function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
           var col = document.createElement('div');
           col.className = 'timetable-col';
 
+          var isToday = (toYMD(dayDate) === toYMD(new Date()));
+          if (isToday) col.classList.add('timetable-col-today');
+
           var header = document.createElement('div');
           header.className = 'timetable-col-header';
           header.innerHTML =
@@ -648,6 +651,292 @@ function buildGradeBar(grade) {
 
   track.appendChild(fill);
   return track;
+}
+
+// Shows the next upcoming class or exam (whichever comes first chronologically)
+// in a banner element. Expects both CSVs to have columns: date,start,end,course,type,room
+function loadNextEventBanner(classesCsvPath, examsCsvPath, bannerId) {
+  var banner = document.getElementById(bannerId);
+  if (!banner) return;
+
+  function fetchRows(path) {
+    return fetch(path + '?v=' + Date.now())
+      .then(function (response) {
+        if (!response.ok) return [];
+        return response.text();
+      })
+      .then(function (text) {
+        if (!text) return [];
+        return parseCSV(text);
+      })
+      .catch(function () { return []; });
+  }
+
+  Promise.all([fetchRows(classesCsvPath), fetchRows(examsCsvPath)])
+    .then(function (results) {
+      var classRows = results[0].map(function (r) { return Object.assign({}, r, { _kind: 'class' }); });
+      var examRows = results[1].map(function (r) { return Object.assign({}, r, { _kind: 'exam' }); });
+      var allRows = classRows.concat(examRows);
+
+      var now = new Date();
+      var todayStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0');
+      var nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      function toMinutes(hhmm) {
+        if (!hhmm) return 0;
+        var parts = hhmm.split(':');
+        return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+      }
+
+      // Keep only entries today (and still ending in the future) or in the future
+      var upcoming = allRows.filter(function (r) {
+        if (!r.date) return false;
+        if (r.date > todayStr) return true;
+        if (r.date === todayStr) {
+          var endMin = toMinutes(r.end || r.start);
+          return endMin > nowMinutes;
+        }
+        return false;
+      });
+
+      if (upcoming.length === 0) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      upcoming.sort(function (a, b) {
+        if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+        return toMinutes(a.start) - toMinutes(b.start);
+      });
+
+      var next = upcoming[0];
+      var dateObj = new Date(next.date + 'T00:00:00');
+      var isToday = next.date === todayStr;
+
+      var dateLabel;
+      if (isToday) {
+        dateLabel = 'vandaag';
+      } else {
+        dateLabel = dateObj.toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      }
+
+      var kindLabel = next._kind === 'exam' ? 'Volgend examen' : 'Volgende les';
+
+      banner.innerHTML = '';
+      banner.style.display = '';
+
+      var label = document.createElement('span');
+      label.className = 'next-event-label';
+      label.textContent = kindLabel + ': ';
+      banner.appendChild(label);
+
+      var detail = document.createElement('span');
+      detail.className = 'next-event-detail';
+      var text = next.course + ' \u00b7 ' + dateLabel + ' om ' + next.start;
+      if (next.room) text += ' \u00b7 ' + next.room;
+      detail.textContent = text;
+      banner.appendChild(detail);
+    })
+    .catch(function () {
+      banner.style.display = 'none';
+    });
+}
+
+// Generic modal overlay for showing a title + list of label/value rows.
+// detailRows: array of {label, value} objects (value can be a string or a DOM node).
+// extraContent: optional DOM node appended after the detail rows (e.g. a breakdown table).
+function showDetailsOverlay(titleText, detailRows, extraContent) {
+  var overlay = document.createElement('div');
+  overlay.className = 'event-details-overlay';
+  overlay.tabIndex = -1;
+
+  var panel = document.createElement('div');
+  panel.className = 'event-details-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+
+  var closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'event-details-close';
+  closeButton.setAttribute('aria-label', 'Sluiten');
+  closeButton.innerHTML = '&times;';
+  panel.appendChild(closeButton);
+
+  var title = document.createElement('div');
+  title.className = 'event-details-title';
+  title.textContent = titleText || '';
+  panel.appendChild(title);
+
+  (detailRows || []).forEach(function (d) {
+    if (!d || (d.value === undefined || d.value === null || d.value === '')) return;
+    var row = document.createElement('div');
+    row.className = 'event-details-row';
+
+    var labelEl = document.createElement('span');
+    labelEl.className = 'event-details-label';
+    labelEl.textContent = d.label;
+    row.appendChild(labelEl);
+
+    var valueEl = document.createElement('span');
+    valueEl.className = 'event-details-value';
+    if (d.value instanceof Node) {
+      valueEl.appendChild(d.value);
+    } else {
+      valueEl.textContent = d.value;
+    }
+    row.appendChild(valueEl);
+
+    panel.appendChild(row);
+  });
+
+  if (extraContent) {
+    panel.appendChild(extraContent);
+  }
+
+  var info = document.createElement('div');
+  info.className = 'event-details-note';
+  info.textContent = 'Klik buiten het venster of op \u00d7 om te sluiten.';
+  panel.appendChild(info);
+
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+
+  function closeDetails() {
+    if (overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+    }
+  }
+
+  closeButton.addEventListener('click', closeDetails);
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) {
+      closeDetails();
+    }
+  });
+
+  return overlay;
+}
+
+// Load results list with ECTS shown inline, and a click-to-expand breakdown
+// popup per course (sourced from results_breakdown.csv, joined by course name).
+function loadResultsList(resultsCsvPath, breakdownCsvPath, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+
+  function fetchRows(path) {
+    return fetch(path + '?v=' + Date.now())
+      .then(function (response) {
+        if (!response.ok) return [];
+        return response.text();
+      })
+      .then(function (text) {
+        if (!text) return [];
+        return parseCSV(text);
+      })
+      .catch(function () { return []; });
+  }
+
+  Promise.all([fetchRows(resultsCsvPath), fetchRows(breakdownCsvPath)])
+    .then(function (results) {
+      var rows = results[0];
+      var breakdownRows = results[1];
+
+      if (rows.length === 0) {
+        container.innerHTML = '<div class="empty-msg">Nog geen gegevens.</div>';
+        return;
+      }
+
+      // Group breakdown rows by course name
+      var breakdownByCourse = {};
+      breakdownRows.forEach(function (b) {
+        if (!b.course) return;
+        if (!breakdownByCourse[b.course]) breakdownByCourse[b.course] = [];
+        breakdownByCourse[b.course].push(b);
+      });
+
+      container.innerHTML = '';
+
+      rows.forEach(function (row) {
+        var card = document.createElement('div');
+        card.className = 'entry-card score-item';
+
+        var title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = row.course;
+
+        var meta = document.createElement('div');
+        meta.className = 'meta';
+        var metaText = 'Score: ' + row.grade + ' / 20 \u00b7 ' + row.period;
+        if (row.ects) metaText += ' \u00b7 ' + row.ects + ' ECTS';
+        if (row.notes) metaText += ' \u00b7 ' + row.notes;
+        meta.textContent = metaText;
+
+        card.appendChild(title);
+        card.appendChild(meta);
+        card.appendChild(buildGradeBar(row.grade));
+
+        var components = breakdownByCourse[row.course];
+        if (components && components.length > 0) {
+          card.classList.add('has-breakdown');
+          card.tabIndex = 0;
+          card.setAttribute('role', 'button');
+
+          var hint = document.createElement('div');
+          hint.className = 'breakdown-hint';
+          hint.textContent = 'Tik voor detail van deelscores';
+          card.appendChild(hint);
+
+          function openBreakdown() {
+            var table = document.createElement('div');
+            table.className = 'breakdown-table';
+
+            components.forEach(function (c) {
+              var rowEl = document.createElement('div');
+              rowEl.className = 'breakdown-row';
+
+              var nameEl = document.createElement('span');
+              nameEl.className = 'breakdown-component';
+              nameEl.textContent = c.component;
+              rowEl.appendChild(nameEl);
+
+              var gradeEl = document.createElement('span');
+              gradeEl.className = 'breakdown-grade';
+              var gradeText = c.grade + ' / 20';
+              if (c.weight) gradeText += ' (' + c.weight + '%)';
+              gradeEl.textContent = gradeText;
+              rowEl.appendChild(gradeEl);
+
+              table.appendChild(rowEl);
+              table.appendChild(buildGradeBar(c.grade));
+            });
+
+            var detailRows = [
+              { label: 'Eindscore', value: row.grade + ' / 20' },
+              { label: 'Periode', value: row.period },
+              { label: 'ECTS', value: row.ects ? row.ects + ' studiepunten' : '' },
+              { label: 'Opmerking', value: row.notes }
+            ];
+
+            showDetailsOverlay(row.course, detailRows, table);
+          }
+
+          card.addEventListener('click', openBreakdown);
+          card.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openBreakdown();
+            }
+          });
+        }
+
+        container.appendChild(card);
+      });
+    })
+    .catch(function () {
+      container.innerHTML = '<div class="empty-msg">Kon gegevens niet laden.</div>';
+    });
 }
 
 // Simple live search/filter for course or entry lists
