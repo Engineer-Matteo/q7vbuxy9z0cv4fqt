@@ -18,6 +18,8 @@
   </header>
 
   <main>
+    <div id="next-event-banner" class="next-event-banner" style="display:none;"></div>
+
     <a class="button-link" href="classes/classes.html">
       <span class="icon">📅</span>
       <span>Lesrooster</span>
@@ -46,5 +48,8 @@
   </div>
 
   <script src="script.js"></script>
+  <script>
+    loadNextEventBanner('classes/classes.csv', 'exams/exams.csv', 'next-event-banner');
+  </script>
 </body>
 </html>

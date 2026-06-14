@@ -1,0 +1,49 @@
+course,component,grade,weight
+Lineaire Algebra,Taak 1,20,3
+Lineaire Algebra,Taak 2,14,7
+Lineaire Algebra,Oefeningenexamen,"12,5",45
+Lineaire Algebra,Theorie-examen,4,45
+Wiskundige Analyse I,Oefeningenexamen,6,50
+Wiskundige Analyse I,Theorie-examen,2,50
+Mechanica: basisconcepten,Huiswerk,18,10
+Mechanica: basisconcepten,Oefeningenexamen,14,45
+Mechanica: basisconcepten,Theorie-examen,12,45
+Mechanica met ontwerpproject,Inventor,,20
+Mechanica met ontwerpproject,Oefeningenexamen,,40
+Mechanica met ontwerpproject,Theorie-examen,,40
+Toegepaste Elektriciteit,Labo's,,25
+Toegepaste Elektriciteit,Examen deel parate kennis,,5
+Toegepaste Elektriciteit,Oefeningenexamen,,25
+Toegepaste Elektriciteit,Theorie-examen deel meettechnieken,,15
+Toegepaste Elektriciteit,Theorie-examen deel netwerkentheorie,14,15
+Toegepaste Elektriciteit,Theorie-examen deel macroscopische elektriciteit,8,15
+Toegepaste Statistiek,Oefeningenexamen,,50
+Toegepaste Statistiek,Examen deel parate kennis,,10
+Toegepaste Statistiek,Theorie-examen,,40
+Chemie en project,Praktijk,"13,3",30
+Chemie en project,Examen,,70
+Fysica,Huistaken,20,20
+Fysica,Oefeningenexamen,,35
+Fysica,Theorie-examen,,45
+Mechanica: dynamica en statica,Huiswerk,18,10
+Mechanica: dynamica en statica,Oefeningenexamen,,45
+Mechanica: dynamica en statica,Theorie-examen,,45
+Wiskundige Analyse II,Oefeningenexamen,,50
+Wiskundige Analyse II,Theorie-examen,,50
+Workshop Wiskunde,Wiskundige Technieken,15,60
+Workshop Wiskunde,MATLAB,20,40
+Chemie: bouwstenen van de materie,Theorie-examen oktober,8,5
+Chemie: bouwstenen van de materie,Oefeningenexamen oktober,11,5
+Chemie: bouwstenen van de materie,Praktijk,"12,7",25
+Chemie: bouwstenen van de materie,Examen januari,9,65
+Programmeerconcepten,Oefeningenexamen,,50
+Programmeerconcepten,Theorie-examen,,50
+Science Lab,Presentatie CRP,"9,5",15
+Science Lab,Examen,10,45
+Science Lab,Labo's,"14,838",30
+Science Lab,Huistaken,20,10
+Softwareontwikkeling en AI-Algoritmes,Theorie-examen,"12,4",33
+Softwareontwikkeling en AI-Algoritmes,Oefeningenexamen,"18,6",33
+Softwareontwikkeling en AI-Algoritmes,Project,18,33
+Project Technologie & Duurzaamheid,Individuele tests,18,20
+Project Technologie & Duurzaamheid,Groepswerk (verslag + video),14,80

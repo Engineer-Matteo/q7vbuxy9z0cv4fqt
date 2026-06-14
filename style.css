@@ -61,6 +61,25 @@ header.top .stripe {
 
 header.top { position: relative; }
 
+/* Next class/exam banner on homepage */
+.next-event-banner {
+  background: var(--card-bg);
+  border: 2px solid var(--vub-orange);
+  border-radius: 12px;
+  padding: 0.9em 1.1em;
+  margin-bottom: 1.2em;
+  font-size: 0.98em;
+}
+
+.next-event-label {
+  font-weight: 700;
+  color: var(--vub-orange);
+}
+
+.next-event-detail {
+  color: var(--text);
+}
+
 main {
   max-width: 640px;
   margin: 0 auto;
@@ -200,6 +219,48 @@ h2 {
   color: var(--text-soft);
   font-style: italic;
   padding: 1em 0;
+}
+
+.entry-card.has-breakdown {
+  cursor: pointer;
+}
+
+.entry-card.has-breakdown:active {
+  background: #F5F7FC;
+}
+
+.breakdown-hint {
+  margin-top: 0.6em;
+  font-size: 0.85em;
+  color: var(--vub-blue);
+  font-weight: 600;
+}
+
+.breakdown-table {
+  margin-top: 1rem;
+  border-top: 2px dashed #DDE3F0;
+  padding-top: 1rem;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.breakdown-component {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.breakdown-grade {
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.breakdown-table .grade-bar-track {
+  margin-bottom: 0.9rem;
 }
 
 /* Grade bar inside result cards */
@@ -360,6 +421,14 @@ main.wide {
   font-weight: 400;
   font-size: 0.85em;
   opacity: 0.85;
+}
+
+.timetable-col-today {
+  background: rgba(255, 102, 0, 0.06);
+}
+
+.timetable-col-today .timetable-col-header {
+  background: var(--vub-orange);
 }
 
 /* Timetable grid */
