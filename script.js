@@ -97,7 +97,30 @@ function splitCSVLine(line) {
   return result;
 }
 
-function loadAverageScore(csvPath, badgeId) {
+function parsePeriod(period) {
+  if (!period) return { semester: '', year: '' };
+  var parts = period.trim().split(/\s+/);
+  var semester = '';
+  var year = '';
+  if (parts.length >= 2) {
+    semester = parts[1];
+  }
+  if (parts.length >= 3) {
+    year = parts.slice(2).join(' ');
+  }
+  return { semester: semester, year: year };
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/service-worker.js')
+      .catch(function (err) {
+        console.warn('Service worker registration failed:', err);
+      });
+  });
+}
+
+function loadAverageScore(csvPath, badgeId, yearFilter, semesterFilter) {
   fetch(csvPath + '?v=' + Date.now())
     .then(function (response) {
       if (!response.ok) throw new Error('CSV not found: ' + csvPath);
@@ -106,20 +129,23 @@ function loadAverageScore(csvPath, badgeId) {
     .then(function (text) {
       var rows = parseCSV(text);
       var total = 0;
-      var count = 0;
+      var weight = 0;
       rows.forEach(function (r) {
         var score = parseFloat(r.grade);
-        if (!isNaN(score)) {
-          total += score;
-          count += 1;
-        }
+        var ects = parseFloat(r.ects);
+        if (isNaN(score) || isNaN(ects) || ects <= 0) return;
+        var parsed = parsePeriod(r.period);
+        if (yearFilter && parsed.year !== yearFilter) return;
+        if (semesterFilter && parsed.semester !== semesterFilter) return;
+        total += score * ects;
+        weight += ects;
       });
       var badge = document.getElementById(badgeId);
       if (!badge) return;
-      if (count === 0) {
+      if (weight === 0) {
         badge.textContent = 'gem. 0.0 /20';
       } else {
-        badge.textContent = 'gem. ' + (total / count).toFixed(1) + ' /20';
+        badge.textContent = 'gem. ' + (total / weight).toFixed(1) + ' /20';
       }
     })
     .catch(function () {
@@ -823,7 +849,9 @@ function showDetailsOverlay(titleText, detailRows, extraContent) {
 // popup per course (sourced from results_breakdown.csv, joined by course name).
 function loadResultsList(resultsCsvPath, breakdownCsvPath, containerId) {
   var container = document.getElementById(containerId);
-  if (!container) return;
+  var yearSelect = document.getElementById('year-filter');
+  var semesterSelect = document.getElementById('semester-filter');
+  if (!container || !yearSelect || !semesterSelect) return;
 
   function fetchRows(path) {
     return fetch(path + '?v=' + Date.now())
@@ -842,13 +870,11 @@ function loadResultsList(resultsCsvPath, breakdownCsvPath, containerId) {
     .then(function (results) {
       var rows = results[0];
       var breakdownRows = results[1];
-
       if (rows.length === 0) {
         container.innerHTML = '<div class="empty-msg">Nog geen gegevens.</div>';
         return;
       }
 
-      // Group breakdown rows by course name
       var breakdownByCourse = {};
       breakdownRows.forEach(function (b) {
         if (!b.course) return;
@@ -856,83 +882,142 @@ function loadResultsList(resultsCsvPath, breakdownCsvPath, containerId) {
         breakdownByCourse[b.course].push(b);
       });
 
-      container.innerHTML = '';
-
+      var years = [];
+      var semesters = [];
       rows.forEach(function (row) {
-        var card = document.createElement('div');
-        card.className = 'entry-card score-item';
+        var parsed = parsePeriod(row.period);
+        if (parsed.year && years.indexOf(parsed.year) === -1) years.push(parsed.year);
+        if (parsed.semester && semesters.indexOf(parsed.semester) === -1) semesters.push(parsed.semester);
+      });
+      years.sort();
+      semesters.sort();
 
-        var title = document.createElement('div');
-        title.className = 'title';
-        title.textContent = row.course;
+      function setOptions(select, values, label) {
+        select.innerHTML = '';
+        var emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = label;
+        select.appendChild(emptyOption);
+        values.forEach(function (value) {
+          var option = document.createElement('option');
+          option.value = value;
+          option.textContent = value;
+          select.appendChild(option);
+        });
+      }
 
-        var meta = document.createElement('div');
-        meta.className = 'meta';
-        var metaText = 'Score: ' + row.grade + ' / 20 \u00b7 ' + row.period;
-        if (row.ects) metaText += ' \u00b7 ' + row.ects + ' ECTS';
-        if (row.notes) metaText += ' \u00b7 ' + row.notes;
-        meta.textContent = metaText;
+      setOptions(yearSelect, years, 'Alle jaren');
+      setOptions(semesterSelect, semesters, 'Alle semesters');
 
-        card.appendChild(title);
-        card.appendChild(meta);
-        card.appendChild(buildGradeBar(row.grade));
+      function filterRows() {
+        var yearValue = yearSelect.value;
+        var semesterValue = semesterSelect.value;
+        return rows.filter(function (row) {
+          var parsed = parsePeriod(row.period);
+          if (yearValue && parsed.year !== yearValue) return false;
+          if (semesterValue && parsed.semester !== semesterValue) return false;
+          return true;
+        });
+      }
 
-        var components = breakdownByCourse[row.course];
-        if (components && components.length > 0) {
-          card.classList.add('has-breakdown');
-          card.tabIndex = 0;
-          card.setAttribute('role', 'button');
-
-          var hint = document.createElement('div');
-          hint.className = 'breakdown-hint';
-          hint.textContent = 'Tik voor detail van deelscores';
-          card.appendChild(hint);
-
-          function openBreakdown() {
-            var table = document.createElement('div');
-            table.className = 'breakdown-table';
-
-            components.forEach(function (c) {
-              var rowEl = document.createElement('div');
-              rowEl.className = 'breakdown-row';
-
-              var nameEl = document.createElement('span');
-              nameEl.className = 'breakdown-component';
-              nameEl.textContent = c.component;
-              rowEl.appendChild(nameEl);
-
-              var gradeEl = document.createElement('span');
-              gradeEl.className = 'breakdown-grade';
-              var gradeText = c.grade + ' / 20';
-              if (c.weight) gradeText += ' (' + c.weight + '%)';
-              gradeEl.textContent = gradeText;
-              rowEl.appendChild(gradeEl);
-
-              table.appendChild(rowEl);
-              table.appendChild(buildGradeBar(c.grade));
-            });
-
-            var detailRows = [
-              { label: 'Eindscore', value: row.grade + ' / 20' },
-              { label: 'Periode', value: row.period },
-              { label: 'ECTS', value: row.ects ? row.ects + ' studiepunten' : '' },
-              { label: 'Opmerking', value: row.notes }
-            ];
-
-            showDetailsOverlay(row.course, detailRows, table);
-          }
-
-          card.addEventListener('click', openBreakdown);
-          card.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openBreakdown();
-            }
-          });
+      function renderRows(filteredRows) {
+        container.innerHTML = '';
+        if (filteredRows.length === 0) {
+          container.innerHTML = '<div class="empty-msg">Nog geen resultaten voor deze selectie.</div>';
+          return;
         }
 
-        container.appendChild(card);
-      });
+        filteredRows.forEach(function (row) {
+          var card = document.createElement('div');
+          card.className = 'entry-card score-item';
+
+          var title = document.createElement('div');
+          title.className = 'title';
+          title.textContent = row.course;
+
+          var meta = document.createElement('div');
+          meta.className = 'meta';
+          var metaText = 'Score: ' + row.grade + ' / 20 \u00b7 ' + row.period;
+          if (row.ects) metaText += ' \u00b7 ' + row.ects + ' ECTS';
+          if (row.notes) metaText += ' \u00b7 ' + row.notes;
+          meta.textContent = metaText;
+
+          card.appendChild(title);
+          card.appendChild(meta);
+          card.appendChild(buildGradeBar(row.grade));
+
+          var components = breakdownByCourse[row.course];
+          if (components && components.length > 0) {
+            card.classList.add('has-breakdown');
+            card.tabIndex = 0;
+            card.setAttribute('role', 'button');
+
+            var hint = document.createElement('div');
+            hint.className = 'breakdown-hint';
+            hint.textContent = 'Tik voor detail van deelscores';
+            card.appendChild(hint);
+
+            function openBreakdown() {
+              var table = document.createElement('div');
+              table.className = 'breakdown-table';
+
+              components.forEach(function (c) {
+                var rowEl = document.createElement('div');
+                rowEl.className = 'breakdown-row';
+
+                var nameEl = document.createElement('span');
+                nameEl.className = 'breakdown-component';
+                nameEl.textContent = c.component;
+                rowEl.appendChild(nameEl);
+
+                var gradeEl = document.createElement('span');
+                gradeEl.className = 'breakdown-grade';
+                var gradeText = c.grade + ' / 20';
+                if (c.weight) gradeText += ' (' + c.weight + '%)';
+                gradeEl.textContent = gradeText;
+                rowEl.appendChild(gradeEl);
+
+                table.appendChild(rowEl);
+                table.appendChild(buildGradeBar(c.grade));
+              });
+
+              var detailRows = [
+                { label: 'Eindscore', value: row.grade + ' / 20' },
+                { label: 'Periode', value: row.period },
+                { label: 'ECTS', value: row.ects ? row.ects + ' studiepunten' : '' },
+                { label: 'Opmerking', value: row.notes }
+              ];
+
+              showDetailsOverlay(row.course, detailRows, table);
+            }
+
+            card.addEventListener('click', openBreakdown);
+            card.addEventListener('keydown', function (e) {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openBreakdown();
+              }
+            });
+          }
+
+          container.appendChild(card);
+        });
+      }
+
+      function applyFilters() {
+        var filteredRows = filterRows();
+        renderRows(filteredRows);
+        loadAverageScore(resultsCsvPath, 'avg-score', yearSelect.value, semesterSelect.value);
+        var input = document.getElementById('score-search');
+        if (input && input.value.trim() !== '') {
+          input.dispatchEvent(new Event('input'));
+        }
+      }
+
+      yearSelect.addEventListener('change', applyFilters);
+      semesterSelect.addEventListener('change', applyFilters);
+
+      applyFilters();
     })
     .catch(function () {
       container.innerHTML = '<div class="empty-msg">Kon gegevens niet laden.</div>';

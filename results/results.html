@@ -22,6 +22,21 @@
     <a class="back-link" href="../index.html">&larr; Terug naar homepagina</a>
     <h2>Resultaten</h2>
 
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="year-filter">Academisch jaar</label>
+        <select id="year-filter" aria-label="Filter op academisch jaar">
+          <option value="">Alle jaren</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="semester-filter">Semester</label>
+        <select id="semester-filter" aria-label="Filter op semester">
+          <option value="">Alle semesters</option>
+        </select>
+      </div>
+    </div>
+
     <input
       type="text"
       id="score-search"
@@ -49,7 +64,6 @@
   <script src="../script.js"></script>
   <script>
     setupSearch('score-search', '.score-item', 'no-results');
-    loadAverageScore('results.csv', 'avg-score');
     loadResultsList('results.csv', 'results_breakdown.csv', 'results-list');
   </script>
 </body>
