@@ -12,44 +12,48 @@
   <meta name="theme-color" content="#003399">
 </head>
 <body>
-  <header class="top">
-    <h1>Homepagina</h1>
-    <div class="stripe"></div>
-  </header>
-
-  <main>
-    <div id="next-event-banner" class="next-event-banner" style="display:none;"></div>
-
-    <a class="button-link" href="classes/classes.html">
-      <span class="icon">📅</span>
-      <span>Lesrooster</span>
-    </a>
-
-    <a class="button-link" href="exams/exams.html">
-      <span class="icon">📝</span>
-      <span>Examenrooster</span>
-    </a>
-
-    <a class="button-link" href="results/results.html">
-      <span class="icon">📊</span>
-      <span>Resultaten</span>
-    </a>
-
-    <a class="button-link" href="courses/courses.html">
-      <span class="icon">📚</span>
-      <span>Opleidingsonderdelen</span>
-    </a>
+  <main class="pin-gate" id="pin-gate">
+    <h1>Enter your PIN</h1>
+    <form id="pin-form">
+      <label for="pin-input">PIN</label>
+      <input id="pin-input" name="pin" type="password" inputmode="numeric" autocomplete="current-password" required>
+      <button type="submit">Continue</button>
+      <p id="pin-status" role="status" aria-live="polite"></p>
+    </form>
   </main>
 
-  <div class="access-bar">
-    <button id="font-dec" aria-label="Decrease text size">A−</button>
-    <span>Tekst grootte</span>
-    <button id="font-inc" aria-label="Increase text size">A+</button>
+  <div id="app-content" hidden>
+    <header class="top">
+      <h1>Homepage</h1>
+      <div class="stripe"></div>
+    </header>
+
+    <main>
+      <p id="welcome-message" class="welcome-message"></p>
+      <div id="next-cleaner-banner" class="next-cleaner-banner" style="display:none;"></div>
+
+      <a class="button-link" href="cleaning/schedule.html">
+        <span class="icon">📅</span>
+        <span>Cleaning Schedule</span>
+      </a>
+
+      <a class="button-link" href="oven/reservations.html">
+        <span class="icon">📝</span>
+        <span>Oven Reservation</span>
+      </a>
+    </main>
   </div>
 
   <script src="script.js"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
   <script>
-    loadNextEventBanner('classes/classes.csv', 'exams/exams.csv', 'next-event-banner');
+    setupPinGate(window.DORM_APP_CONFIG.appsScriptUrl, function () {
+      var welcomeMessage = document.getElementById('welcome-message');
+      var username = sessionStorage.getItem('dormAppUser');
+      welcomeMessage.textContent = username ? 'Welcome ' + username : 'Welcome';
+      loadNextEventBanner(window.DORM_APP_CONFIG.appsScriptUrl, 'next-cleaner-banner');
+    });
   </script>
 </body>
 </html>

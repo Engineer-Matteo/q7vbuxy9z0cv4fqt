@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oven Reservations</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003399">
+</head>
+<body>
+  <header class="top">
+    <h1>Oven Reservations</h1>
+    <div class="stripe"></div>
+  </header>
+
+  <main class="wide">
+    <a class="back-link" href="../index.html">&larr; Back to the homepage</a>
+
+    <div class="week-nav" id="calendar-controls">
+      <button id="prev-week" type="button" aria-label="Previous week">&larr;</button>
+      <span id="week-label">Loading...</span>
+      <button id="next-week" type="button" aria-label="Next week">&rarr;</button>
+    </div>
+
+    <section class="oven-reservation-form" aria-labelledby="reservation-heading">
+      <h2 id="reservation-heading">Reserve an oven slot</h2>
+      <form id="reservation-form">
+        <label>
+          Date
+          <input id="reservation-date" name="date" type="date" required>
+        </label>
+        <label>
+          Start time
+          <input id="reservation-time" name="time" type="time" required>
+        </label>
+        <label>
+          Duration
+          <select id="reservation-duration" name="duration" required>
+            <option value="30">30 minutes</option>
+            <option value="60" selected>1 hour</option>
+            <option value="90">1 hour 30 minutes</option>
+            <option value="120">2 hours</option>
+            <option value="180">3 hours</option>
+          </select>
+        </label>
+        <button type="submit">Reserve slot</button>
+      </form>
+      <p id="reservation-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <div id="reservation-calendar">
+      <div class="empty-msg">Loading...</div>
+    </div>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="reservations.js"></script>
+  <script>
+    setupOvenReservations('reservations.json', window.DORM_APP_CONFIG.appsScriptUrl);
+  </script>
+</body>
+</html>
