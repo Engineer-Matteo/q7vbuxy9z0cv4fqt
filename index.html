@@ -13,43 +13,28 @@
 </head>
 <body>
   <header class="top">
-    <h1>Homepagina</h1>
+    <h1>Homepage</h1>
     <div class="stripe"></div>
   </header>
 
   <main>
-    <div id="next-event-banner" class="next-event-banner" style="display:none;"></div>
+    <div id="next-cleaner-banner" class="next-cleaner-banner" style="display:none;"></div>
 
-    <a class="button-link" href="classes/classes.html">
+    <a class="button-link" href="cleaning/schedule.html">
       <span class="icon">📅</span>
-      <span>Lesrooster</span>
+      <span>cleaning Schedule</span>
     </a>
 
-    <a class="button-link" href="exams/exams.html">
+    <a class="button-link" href="oven/reservations.html">
       <span class="icon">📝</span>
-      <span>Examenrooster</span>
+      <span>Oven Reservation</span>
     </a>
 
-    <a class="button-link" href="results/results.html">
-      <span class="icon">📊</span>
-      <span>Resultaten</span>
-    </a>
-
-    <a class="button-link" href="courses/courses.html">
-      <span class="icon">📚</span>
-      <span>Opleidingsonderdelen</span>
-    </a>
   </main>
-
-  <div class="access-bar">
-    <button id="font-dec" aria-label="Decrease text size">A−</button>
-    <span>Tekst grootte</span>
-    <button id="font-inc" aria-label="Increase text size">A+</button>
-  </div>
 
   <script src="script.js"></script>
   <script>
-    loadNextEventBanner('classes/classes.csv', 'exams/exams.csv', 'next-event-banner');
+    loadNextEventBanner('cleaning/schedule.csv', 'next-cleaner-banner');
   </script>
 </body>
 </html>

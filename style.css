@@ -439,6 +439,93 @@ main.wide {
   flex: 1;
 }
 
+#month-label {
+  font-weight: 700;
+  color: var(--vub-blue);
+  font-size: 1em;
+  text-align: center;
+  flex: 1;
+}
+
+.cleaning-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid rgba(0, 51, 153, 0.18);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.cleaning-weekday {
+  padding: 0.75em 0.5em;
+  background: var(--vub-blue);
+  color: white;
+  text-align: center;
+  font-weight: 700;
+}
+
+.cleaning-day {
+  min-width: 0;
+  min-height: 118px;
+  padding: 0.5em;
+  border-top: 1px solid rgba(0, 51, 153, 0.12);
+  border-right: 1px solid rgba(0, 51, 153, 0.12);
+  background: var(--card-bg);
+}
+
+.cleaning-day:nth-child(7n) {
+  border-right: 0;
+}
+
+.cleaning-day.outside-month {
+  background: rgba(0, 0, 0, 0.025);
+  color: var(--text-soft);
+}
+
+.cleaning-day.is-today {
+  box-shadow: inset 0 0 0 2px var(--vub-orange);
+}
+
+.cleaning-day-number {
+  display: block;
+  margin-bottom: 0.45em;
+  font-weight: 700;
+}
+
+.cleaning-event {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  padding: 0.4em;
+  border-left: 3px solid var(--vub-orange);
+  border-radius: 4px;
+  background: #EEF2FB;
+  color: var(--vub-blue);
+  font-size: 0.82em;
+  overflow-wrap: anywhere;
+}
+
+.cleaning-event + .cleaning-event {
+  margin-top: 0.35em;
+}
+
+@media (max-width: 600px) {
+  .cleaning-weekday {
+    padding: 0.6em 0.15em;
+    font-size: 0.8em;
+  }
+
+  .cleaning-day {
+    min-height: 92px;
+    padding: 0.3em;
+  }
+
+  .cleaning-event {
+    padding: 0.3em;
+    font-size: 0.7em;
+  }
+}
+
 .timetable-col-header .col-day {
   display: block;
   font-weight: 700;

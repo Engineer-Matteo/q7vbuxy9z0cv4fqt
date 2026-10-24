@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cleaning Schedule</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003399">
+</head>
+<body>
+  <header class="top">
+    <h1>Cleaning Schedule</h1>
+    <div class="stripe"></div>
+  </header>
+
+  <main class="wide">
+    <a class="back-link" href="../index.html">&larr; Back to the homepage</a>
+
+    <div class="view-toggle">
+      <button id="view-calendar" type="button" class="active">Calendar</button>
+      <button id="view-list" type="button">List</button>
+    </div>
+
+    <div class="week-nav month-nav" id="calendar-controls">
+      <button id="prev-month" type="button" aria-label="Previous month">&larr;</button>
+      <button id="today-month" type="button" class="today-button">This month</button>
+      <span id="month-label">Loading...</span>
+      <button id="next-month" type="button" aria-label="Next month">&rarr;</button>
+    </div>
+ 
+    <div id="timetable-container">
+      <div class="empty-msg">Loading...</div>
+    </div>
+
+    <div id="schedule-list" style="display:none;">
+      <div class="empty-msg">Loading...</div>
+    </div>
+
+  </main>
+
+  <script src="../script.js"></script>
+  <script>
+    setupCleaningSchedule(
+      'schedule.csv',
+      'timetable-container',
+      'schedule-list',
+      'month-label',
+      'prev-month',
+      'next-month',
+      'calendar-controls'
+    );
+  </script>
+</body>
+</html>

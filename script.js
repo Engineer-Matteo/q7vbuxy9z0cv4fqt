@@ -1,1044 +1,270 @@
-// Font size adjustment, persisted for the session via root CSS variable
-(function () {
-  var MIN = 14, MAX = 32, STEP = 2;
-  var stored = parseInt(localStorage.getItem('vub-font-size'), 10);
-  var current = isNaN(stored) ? 20 : stored;
-
-  function apply(size) {
-    document.documentElement.style.setProperty('--base-size', size + 'px');
-    localStorage.setItem('vub-font-size', size);
-  }
-
-  apply(current);
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var inc = document.getElementById('font-inc');
-    var dec = document.getElementById('font-dec');
-    if (inc) inc.addEventListener('click', function () {
-      current = Math.min(MAX, current + STEP);
-      apply(current);
-    });
-    if (dec) dec.addEventListener('click', function () {
-      current = Math.max(MIN, current - STEP);
-      apply(current);
-    });
-  });
-})();
-
-// Load a CSV file and render each row using the provided builder function.
-// builder(rowObject) must return a DOM element to append.
-// CSV must have a header row; commas inside a field can be wrapped in "quotes".
-function loadCSVList(csvPath, containerId, builder) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-
-  fetch(csvPath + '?v=' + Date.now())
-    .then(function (response) {
-      if (!response.ok) throw new Error('CSV not found: ' + csvPath);
-      return response.text();
-    })
-    .then(function (text) {
-      var rows = parseCSV(text);
-      if (rows.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nog geen gegevens.</div>';
-        return;
-      }
-      container.innerHTML = '';
-      rows.forEach(function (row) {
-        container.appendChild(builder(row));
-      });
-    })
-    .catch(function (err) {
-      container.innerHTML = '<div class="empty-msg">Kon gegevens niet laden (' + err.message + ').</div>';
-    });
-}
-
-// Basic CSV parser: handles quoted fields containing commas, returns array of objects
-// keyed by the header row.
 function parseCSV(text) {
   var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
     .filter(function (line) { return line.trim().length > 0; });
   if (lines.length === 0) return [];
 
   var headers = splitCSVLine(lines[0]);
-  var rows = [];
-  for (var i = 1; i < lines.length; i++) {
-    var values = splitCSVLine(lines[i]);
-    var obj = {};
-    for (var j = 0; j < headers.length; j++) {
-      obj[headers[j].trim()] = (values[j] || '').trim();
-    }
-    rows.push(obj);
-  }
-  return rows;
+  return lines.slice(1).map(function (line) {
+    var values = splitCSVLine(line);
+    var row = {};
+    headers.forEach(function (header, index) {
+      row[header.trim()] = (values[index] || '').trim();
+    });
+    return row;
+  });
 }
 
 function splitCSVLine(line) {
-  var result = [];
-  var current = '';
+  var values = [];
+  var value = '';
   var inQuotes = false;
   for (var i = 0; i < line.length; i++) {
-    var char = line[i];
-    if (char === '"') {
+    var character = line[i];
+    if (character === '"') {
       if (inQuotes && line[i + 1] === '"') {
-        current += '"';
+        value += '"';
         i++;
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
+    } else if (character === ',' && !inQuotes) {
+      values.push(value);
+      value = '';
     } else {
-      current += char;
+      value += character;
     }
   }
-  result.push(current);
-  return result;
+  values.push(value);
+  return values;
 }
 
-function parsePeriod(period) {
-  if (!period) return { semester: '', year: '' };
-  var parts = period.trim().split(/\s+/);
-  var semester = '';
-  var year = '';
-  if (parts.length >= 2) {
-    semester = parts[1];
-  }
-  if (parts.length >= 3) {
-    year = parts.slice(2).join(' ');
-  }
-  return { semester: semester, year: year };
+function fetchCleaningRows(csvPath) {
+  return fetch(csvPath + '?v=' + Date.now()).then(function (response) {
+    if (!response.ok) throw new Error('CSV not found: ' + csvPath);
+    return response.text();
+  }).then(parseCSV);
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/service-worker.js')
-      .catch(function (err) {
-        console.warn('Service worker registration failed:', err);
-      });
-  });
-}
-
-function loadAverageScore(csvPath, badgeId, yearFilter, semesterFilter) {
-  fetch(csvPath + '?v=' + Date.now())
-    .then(function (response) {
-      if (!response.ok) throw new Error('CSV not found: ' + csvPath);
-      return response.text();
-    })
-    .then(function (text) {
-      var rows = parseCSV(text);
-      var total = 0;
-      var weight = 0;
-      rows.forEach(function (r) {
-        var score = parseFloat(r.grade);
-        var ects = parseFloat(r.ects);
-        if (isNaN(score) || isNaN(ects) || ects <= 0) return;
-        var parsed = parsePeriod(r.period);
-        if (yearFilter && parsed.year !== yearFilter) return;
-        if (semesterFilter && parsed.semester !== semesterFilter) return;
-        total += score * ects;
-        weight += ects;
-      });
-      var badge = document.getElementById(badgeId);
-      if (!badge) return;
-      if (weight === 0) {
-        badge.textContent = 'gem. 0.0 /20';
-      } else {
-        badge.textContent = 'gem. ' + (total / weight).toFixed(1) + ' /20';
-      }
-    })
-    .catch(function () {
-      var badge = document.getElementById(badgeId);
-      if (badge) badge.textContent = 'gem. -- /20';
-    });
-}
-
-// Date-aware timetable with week navigation.
-// Expected CSV columns: date (YYYY-MM-DD), day, start, end, course, type, room
-function setupClassViewToggle(csvPath, timetableContainerId, listContainerId, labelId, prevId, nextId, controlsId) {
+function setupCleaningSchedule(csvPath, calendarContainerId, listContainerId, labelId, prevId, nextId, controlsId) {
   var calendarBtn = document.getElementById('view-calendar');
   var listBtn = document.getElementById('view-list');
-  var timetableEl = document.getElementById(timetableContainerId);
+  var calendarEl = document.getElementById(calendarContainerId);
   var listEl = document.getElementById(listContainerId);
   var controlsEl = document.getElementById(controlsId);
-  if (!calendarBtn || !listBtn || !timetableEl || !listEl) return;
+  if (!calendarBtn || !listBtn || !calendarEl || !listEl) return;
 
   function show(view) {
-    if (view === 'list') {
-      timetableEl.style.display = 'none';
-      listEl.style.display = '';
-      if (controlsEl) controlsEl.style.display = 'none';
-      calendarBtn.classList.remove('active');
-      listBtn.classList.add('active');
-    } else {
-      timetableEl.style.display = '';
-      listEl.style.display = 'none';
-      if (controlsEl) controlsEl.style.display = '';
-      calendarBtn.classList.add('active');
-      listBtn.classList.remove('active');
-    }
+    var showList = view === 'list';
+    calendarEl.style.display = showList ? 'none' : '';
+    listEl.style.display = showList ? '' : 'none';
+    if (controlsEl) controlsEl.style.display = showList ? 'none' : '';
+    calendarBtn.classList.toggle('active', !showList);
+    listBtn.classList.toggle('active', showList);
   }
 
   calendarBtn.addEventListener('click', function () { show('calendar'); });
   listBtn.addEventListener('click', function () { show('list'); });
-  loadTimetable(csvPath, timetableContainerId, labelId, prevId, nextId);
-  loadDatedList(csvPath, listContainerId);
+  loadCleaningMonthView(csvPath, calendarContainerId, labelId, prevId, nextId);
+  loadCleaningList(csvPath, listContainerId);
   show('calendar');
 }
 
-function loadTimetable(csvPath, containerId, labelId, prevId, nextId) {
+function loadCleaningMonthView(csvPath, containerId, labelId, prevId, nextId) {
   var container = document.getElementById(containerId);
   if (!container) return;
 
-  // Monday of the current week as the starting offset
-  var weekOffset = 0;
+  var monthOffset = 0;
+  var weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  fetch(csvPath + '?v=' + Date.now())
-    .then(function (response) {
-      if (!response.ok) throw new Error('CSV not found: ' + csvPath);
-      return response.text();
-    })
-    .then(function (text) {
-      var allRows = parseCSV(text);
-      if (allRows.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nog geen lessen.</div>';
-        return;
-      }
-
-      function getMonday(offset) {
-        var now = new Date();
-        var day = now.getDay(); // 0=Sun,1=Mon,...
-        var diff = (day === 0 ? -6 : 1 - day); // adjust to Monday
-        var monday = new Date(now);
-        monday.setDate(now.getDate() + diff + offset * 7);
-        monday.setHours(0, 0, 0, 0);
-        return monday;
-      }
-
-      function toYMD(d) {
-        var y = d.getFullYear();
-        var m = String(d.getMonth() + 1).padStart(2, '0');
-        var day = String(d.getDate()).padStart(2, '0');
-        return y + '-' + m + '-' + day;
-      }
-
-      function parseTime(time) {
-        if (!time) return null;
-        var parts = time.split(':');
-        if (parts.length !== 2) return null;
-        var hours = parseInt(parts[0], 10);
-        var minutes = parseInt(parts[1], 10);
-        if (isNaN(hours) || isNaN(minutes)) return null;
-        return { hours: hours, minutes: minutes };
-      }
-
-      function getWeekKey(date) {
-        var d = new Date(date.getTime());
-        var day = d.getDay();
-        var diff = (day === 0 ? -6 : 1 - day);
-        d.setDate(d.getDate() + diff);
-        d.setHours(0, 0, 0, 0);
-        return d.toISOString().slice(0, 10);
-      }
-
-      function getMonthKey(date) {
-        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
-      }
-
-      function updateAverageWeeklyHours(rows, monthKey) {
-        if (!rows.length) return;
-        var totalMinutes = 0;
-        var weekSet = {};
-
-        rows.forEach(function (r) {
-          var date = new Date(r.date);
-          if (isNaN(date.getTime())) return;
-          if (monthKey && getMonthKey(date) !== monthKey) return;
-          var start = parseTime(r.start);
-          var end = parseTime(r.end);
-          if (!start || !end) return;
-          totalMinutes += Math.max(0, (end.hours * 60 + end.minutes) - (start.hours * 60 + start.minutes));
-          weekSet[getWeekKey(date)] = true;
-        });
-
-        var weekCount = Object.keys(weekSet).length;
-        var badge = document.getElementById('avg-hours-week');
-        if (!badge) return;
-        if (!weekCount) {
-          badge.textContent = 'gem. 0.0 u/week';
-          return;
-        }
-
-        var avgHours = totalMinutes / weekCount / 60;
-        badge.textContent = 'gem. ' + avgHours.toFixed(1) + ' u/week';
-      }
-
-      function assignColumns(events) {
-        var columns = [];
-        events.forEach(function (event) {
-          for (var i = 0; i < columns.length; i++) {
-            if (event.startMinutes >= columns[i][columns[i].length - 1].endMinutes) {
-              columns[i].push(event);
-              event.column = i;
-              return;
-            }
-          }
-          event.column = columns.length;
-          columns.push([event]);
-        });
-        return columns.length;
-      }
-
-      function showEventDetails(match) {
-        var overlay = document.createElement('div');
-        overlay.className = 'event-details-overlay';
-        overlay.tabIndex = -1;
-
-        var panel = document.createElement('div');
-        panel.className = 'event-details-panel';
-        panel.setAttribute('role', 'dialog');
-        panel.setAttribute('aria-modal', 'true');
-
-        var closeButton = document.createElement('button');
-        closeButton.type = 'button';
-        closeButton.className = 'event-details-close';
-        closeButton.setAttribute('aria-label', 'Sluiten');
-        closeButton.innerHTML = '&times;';
-        panel.appendChild(closeButton);
-
-        var title = document.createElement('div');
-        title.className = 'event-details-title';
-        title.textContent = match.course || 'Les';
-        panel.appendChild(title);
-
-        function addDetail(label, value) {
-          if (!value) return;
-          var row = document.createElement('div');
-          row.className = 'event-details-row';
-
-          var labelEl = document.createElement('span');
-          labelEl.className = 'event-details-label';
-          labelEl.textContent = label;
-          row.appendChild(labelEl);
-
-          var valueEl = document.createElement('span');
-          valueEl.className = 'event-details-value';
-          valueEl.textContent = value;
-          row.appendChild(valueEl);
-
-          panel.appendChild(row);
-        }
-
-        var dateText = match.date ? new Date(match.date).toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
-        addDetail('Dag', dateText);
-        addDetail('Tijd', (match.start || '') + ' – ' + (match.end || ''));
-        addDetail('Lestype', match.type);
-        addDetail('Lokaal', match.room);
-
-        if (match.course) {
-          var info = document.createElement('div');
-          info.className = 'event-details-note';
-          info.textContent = 'Klik buiten het vak of op × om te sluiten.';
-          panel.appendChild(info);
-        }
-
-        overlay.appendChild(panel);
-        document.body.appendChild(overlay);
-
-        function closeDetails() {
-          if (overlay.parentNode) {
-            overlay.parentNode.removeChild(overlay);
-          }
-        }
-
-        closeButton.addEventListener('click', closeDetails);
-        overlay.addEventListener('click', function (e) {
-          if (e.target === overlay) {
-            closeDetails();
-          }
-        });
-      }
-
-      function renderWeek() {
-        var monday = getMonday(weekOffset);
-        var monthKey = monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0');
-        updateAverageWeeklyHours(allRows, monthKey);
-
-        var weekDays = [];
-        for (var i = 0; i < 7; i++) {
-          var d = new Date(monday);
-          d.setDate(monday.getDate() + i);
-          weekDays.push(d);
-        }
-
-        var sunday = weekDays[6];
-        var label = document.getElementById(labelId);
-        if (label) {
-          var fmt = { day: 'numeric', month: 'long' };
-          label.textContent =
-            monday.toLocaleDateString('nl-BE', fmt) + ' – ' +
-            sunday.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
-        }
-
-        // Filter rows belonging to this week
-        var weekDates = weekDays.map(toYMD);
-        var weekRows = allRows.filter(function (r) { return weekDates.indexOf(r.date) !== -1; });
-
-        // Only show days that have classes this week
-        var activeDays = weekDays.filter(function (d) {
-          return weekRows.some(function (r) { return r.date === toYMD(d); });
-        });
-
-        container.innerHTML = '';
-
-        if (activeDays.length === 0) {
-          container.innerHTML = '<div class="empty-msg">Geen lessen deze week.</div>';
-          return;
-        }
-
-        var grid = document.createElement('div');
-        grid.className = 'timetable';
-
-        activeDays.forEach(function (dayDate) {
-          var ymd = toYMD(dayDate);
-          var dayRows = weekRows.filter(function (r) { return r.date === ymd; });
-
-          var col = document.createElement('div');
-          col.className = 'timetable-col';
-
-          var isToday = (toYMD(dayDate) === toYMD(new Date()));
-          if (isToday) col.classList.add('timetable-col-today');
-
-          var header = document.createElement('div');
-          header.className = 'timetable-col-header';
-          header.innerHTML =
-            '<span class="col-day">' + dayDate.toLocaleDateString('nl-BE', { weekday: 'long' }) + '</span>' +
-            '<span class="col-date">' + dayDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' }) + '</span>';
-          col.appendChild(header);
-
-          var body = document.createElement('div');
-          body.className = 'timetable-col-body';
-
-          var gridLines = document.createElement('div');
-          gridLines.className = 'timetable-day-grid';
-          for (var h = 0; h < 14; h++) {
-            gridLines.appendChild(document.createElement('div'));
-          }
-          body.appendChild(gridLines);
-
-          var dayStart = 8 * 60;
-          var dayEnd = 22 * 60;
-
-          var events = dayRows.map(function (match) {
-            var start = parseTime(match.start);
-            var end = parseTime(match.end);
-            if (!start || !end) return null;
-            var startMinutes = start.hours * 60 + start.minutes;
-            var endMinutes = end.hours * 60 + end.minutes;
-            if (endMinutes <= dayStart || startMinutes >= dayEnd) return null;
-            return {
-              row: match,
-              startMinutes: Math.max(dayStart, startMinutes),
-              endMinutes: Math.min(dayEnd, endMinutes)
-            };
-          }).filter(Boolean);
-
-          events.sort(function (a, b) {
-            if (a.startMinutes !== b.startMinutes) return a.startMinutes - b.startMinutes;
-            return a.endMinutes - b.endMinutes;
-          });
-
-          var columns = assignColumns(events);
-
-          events.forEach(function (eventInfo) {
-            var top = eventInfo.startMinutes - dayStart;
-            var height = Math.max(64, eventInfo.endMinutes - eventInfo.startMinutes);
-            var smallGap = 6;
-            var visualTop = top + 2;
-            var visualHeight = Math.max(52, height - smallGap);
-
-            var match = eventInfo.row;
-            var event = document.createElement('div');
-            event.className = 'timetable-event';
-            event.style.top = visualTop + 'px';
-            event.style.height = visualHeight + 'px';
-            event.style.zIndex = eventInfo.column + 1;
-
-            if (columns > 1) {
-              var widthPercent = 100 / columns;
-              event.style.left = 'calc(0.75em + ' + (eventInfo.column * widthPercent) + '%)';
-              event.style.width = 'calc(' + widthPercent + '% - 1em)';
-              event.style.right = 'auto';
-            }
-
-            var courseEl = document.createElement('span');
-            courseEl.className = 'event-course';
-            courseEl.textContent = match.course;
-            event.appendChild(courseEl);
-
-            var timeEl = document.createElement('span');
-            timeEl.className = 'event-time';
-            timeEl.textContent = match.start + ' – ' + match.end;
-            event.appendChild(timeEl);
-
-            if (match.type) {
-              var typeEl = document.createElement('span');
-              typeEl.className = 'event-type';
-              typeEl.textContent = match.type;
-              event.appendChild(typeEl);
-            }
-
-            if (match.room) {
-              var roomEl = document.createElement('span');
-              roomEl.className = 'event-room';
-              roomEl.textContent = match.room;
-              event.appendChild(roomEl);
-            }
-
-            event.tabIndex = 0;
-            event.setAttribute('role', 'button');
-            event.addEventListener('click', function () {
-              showEventDetails(match);
-            });
-            event.addEventListener('keydown', function (e) {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                showEventDetails(match);
-              }
-            });
-
-            body.appendChild(event);
-          });
-
-          col.appendChild(body);
-          grid.appendChild(col);
-        });
-
-        container.appendChild(grid);
-      }
-
-      renderWeek();
-
-      var prevBtn = document.getElementById(prevId);
-      var nextBtn = document.getElementById(nextId);
-      if (prevBtn) prevBtn.addEventListener('click', function () { weekOffset--; renderWeek(); });
-      if (nextBtn) nextBtn.addEventListener('click', function () { weekOffset++; renderWeek(); });
-      var todayBtn = document.getElementById('today-week');
-      if (todayBtn) todayBtn.addEventListener('click', function () { weekOffset = 0; renderWeek(); });
-    })
-    .catch(function (err) {
-      container.innerHTML = '<div class="empty-msg">Kon gegevens niet laden (' + err.message + ').</div>';
+  fetchCleaningRows(csvPath).then(function (rows) {
+    var rowsByDate = {};
+    rows.forEach(function (row) {
+      if (!row.date) return;
+      if (!rowsByDate[row.date]) rowsByDate[row.date] = [];
+      rowsByDate[row.date].push(row);
     });
-}
 
-// Render a chronological list of dated entries, grouped by date.
-// Expected CSV columns: date (YYYY-MM-DD), day, start, end, course, type, room
-function loadDatedList(csvPath, containerId) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-
-  fetch(csvPath + '?v=' + Date.now())
-    .then(function (response) {
-      if (!response.ok) throw new Error('CSV not found: ' + csvPath);
-      return response.text();
-    })
-    .then(function (text) {
-      var rows = parseCSV(text);
-      if (rows.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nog geen gegevens.</div>';
-        return;
-      }
-
-      // Sort chronologically
-      rows.sort(function (a, b) {
-        if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-        return a.start < b.start ? -1 : (a.start > b.start ? 1 : 0);
-      });
-
-      // Split into upcoming (today onward) and past
-      var today = new Date();
-      var todayStr = today.getFullYear() + '-' +
-        String(today.getMonth() + 1).padStart(2, '0') + '-' +
-        String(today.getDate()).padStart(2, '0');
-
-      var upcoming = rows.filter(function (r) { return r.date >= todayStr; });
-      var past = rows.filter(function (r) { return r.date < todayStr; });
-
-      container.innerHTML = '';
-
-      if (upcoming.length === 0) {
-        var noneMsg = document.createElement('div');
-        noneMsg.className = 'empty-msg';
-        noneMsg.textContent = 'Geen aankomende afspraken.';
-        container.appendChild(noneMsg);
-      } else {
-        appendDatedRows(upcoming, container);
-      }
-
-      if (past.length > 0) {
-        var pastSection = document.createElement('div');
-        pastSection.className = 'past-section';
-
-        var toggle = document.createElement('button');
-        toggle.className = 'past-toggle';
-        toggle.textContent = 'Toon vorige afspraken (' + past.length + ')';
-
-        var pastContainer = document.createElement('div');
-        pastContainer.className = 'past-entries';
-        pastContainer.style.display = 'none';
-        appendDatedRows(past.reverse(), pastContainer);
-
-        toggle.addEventListener('click', function () {
-          var isHidden = pastContainer.style.display === 'none';
-          pastContainer.style.display = isHidden ? 'block' : 'none';
-          toggle.textContent = isHidden
-            ? 'Verberg vorige afspraken (' + past.length + ')'
-            : 'Toon vorige afspraken (' + past.length + ')';
-        });
-
-        pastSection.appendChild(toggle);
-        pastSection.appendChild(pastContainer);
-        container.appendChild(pastSection);
-      }
-    })
-    .catch(function (err) {
-      container.innerHTML = '<div class="empty-msg">Kon gegevens niet laden (' + err.message + ').</div>';
-    });
-}
-
-function appendDatedRows(rows, container) {
-  var currentDate = null;
-
-  rows.forEach(function (row) {
-    if (row.date !== currentDate) {
-      currentDate = row.date;
-      var heading = document.createElement('div');
-      heading.className = 'day-heading';
-      heading.textContent = formatDateLabel(row.date, row.day);
-      container.appendChild(heading);
+    function toYMD(date) {
+      return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0');
     }
 
-    var card = document.createElement('div');
-    card.className = 'entry-card';
+    function renderMonth() {
+      var now = new Date();
+      var monthStart = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+      var monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+      var startOffset = (monthStart.getDay() + 6) % 7;
+      var gridStart = new Date(monthStart);
+      gridStart.setDate(monthStart.getDate() - startOffset);
 
-    var title = document.createElement('div');
-    title.className = 'title';
-    title.textContent = row.course;
+      var label = document.getElementById(labelId);
+      if (label) label.textContent = monthStart.toLocaleDateString('en', { month: 'long', year: 'numeric' });
 
-    var meta = document.createElement('div');
-    meta.className = 'meta';
-    var metaText = row.start + ' \u2013 ' + row.end;
-    if (row.type) metaText += ' \u00b7 ' + row.type;
-    if (row.room) metaText += ' \u00b7 ' + row.room;
-    meta.textContent = metaText;
+      container.innerHTML = '';
+      if (rows.length === 0) {
+        container.innerHTML = '<div class="empty-msg">No cleaning schedule found.</div>';
+        return;
+      }
 
-    card.appendChild(title);
-    card.appendChild(meta);
-    container.appendChild(card);
+      var calendar = document.createElement('div');
+      calendar.className = 'cleaning-calendar';
+      weekdayNames.forEach(function (name) {
+        var weekday = document.createElement('div');
+        weekday.className = 'cleaning-weekday';
+        weekday.textContent = name;
+        calendar.appendChild(weekday);
+      });
+
+      var dayCount = Math.ceil((startOffset + monthEnd.getDate()) / 7) * 7;
+      var todayYMD = toYMD(now);
+      for (var i = 0; i < dayCount; i++) {
+        var date = new Date(gridStart);
+        date.setDate(gridStart.getDate() + i);
+        var dateKey = toYMD(date);
+        var cell = document.createElement('div');
+        cell.className = 'cleaning-day';
+        if (date.getMonth() !== monthStart.getMonth()) cell.classList.add('outside-month');
+        if (dateKey === todayYMD) cell.classList.add('is-today');
+
+        var dayNumber = document.createElement('span');
+        dayNumber.className = 'cleaning-day-number';
+        dayNumber.textContent = date.getDate();
+        cell.appendChild(dayNumber);
+
+        (rowsByDate[dateKey] || []).forEach(function (row) {
+          var event = document.createElement('div');
+          event.className = 'cleaning-event';
+          var team = document.createElement('strong');
+          team.textContent = 'Team ' + (row.team || '');
+          var people = document.createElement('span');
+          people.textContent = [row.person1, row.person2].filter(Boolean).join(' & ');
+          event.appendChild(team);
+          event.appendChild(people);
+          cell.appendChild(event);
+        });
+        calendar.appendChild(cell);
+      }
+      container.appendChild(calendar);
+    }
+
+    renderMonth();
+    var prevBtn = document.getElementById(prevId);
+    var nextBtn = document.getElementById(nextId);
+    var todayBtn = document.getElementById('today-month');
+    if (prevBtn) prevBtn.addEventListener('click', function () { monthOffset--; renderMonth(); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { monthOffset++; renderMonth(); });
+    if (todayBtn) todayBtn.addEventListener('click', function () { monthOffset = 0; renderMonth(); });
+  }).catch(function (error) {
+    container.innerHTML = '<div class="empty-msg">Could not load schedule (' + error.message + ').</div>';
   });
 }
 
-function formatDateLabel(dateStr, dayName) {
+function loadCleaningList(csvPath, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+
+  fetchCleaningRows(csvPath).then(function (rows) {
+    rows.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+    container.innerHTML = '';
+    if (rows.length === 0) {
+      container.innerHTML = '<div class="empty-msg">No cleaning schedule found.</div>';
+      return;
+    }
+
+    var today = new Date();
+    var todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' +
+      String(today.getDate()).padStart(2, '0');
+    var upcoming = rows.filter(function (row) { return row.date >= todayKey; });
+    var past = rows.filter(function (row) { return row.date < todayKey; }).reverse();
+
+    function appendRows(scheduleRows, target) {
+      scheduleRows.forEach(function (row) {
+        var heading = document.createElement('div');
+        heading.className = 'day-heading';
+        heading.textContent = formatDateLabel(row.date);
+        target.appendChild(heading);
+
+        var card = document.createElement('div');
+        card.className = 'entry-card';
+        var title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = 'Team ' + (row.team || '');
+        var meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = [row.person1, row.person2].filter(Boolean).join(' & ');
+        card.appendChild(title);
+        card.appendChild(meta);
+        target.appendChild(card);
+      });
+    }
+
+    if (upcoming.length) {
+      appendRows(upcoming, container);
+    } else {
+      var noneMsg = document.createElement('div');
+      noneMsg.className = 'empty-msg';
+      noneMsg.textContent = 'No upcoming cleaning duties.';
+      container.appendChild(noneMsg);
+    }
+
+    if (past.length) {
+      var section = document.createElement('div');
+      section.className = 'past-section';
+      var toggle = document.createElement('button');
+      toggle.className = 'past-toggle';
+      toggle.type = 'button';
+      toggle.textContent = 'Show previous duties (' + past.length + ')';
+      var pastEntries = document.createElement('div');
+      pastEntries.className = 'past-entries';
+      pastEntries.style.display = 'none';
+      appendRows(past, pastEntries);
+      toggle.addEventListener('click', function () {
+        var isHidden = pastEntries.style.display === 'none';
+        pastEntries.style.display = isHidden ? 'block' : 'none';
+        toggle.textContent = (isHidden ? 'Hide' : 'Show') + ' previous duties (' + past.length + ')';
+      });
+      section.appendChild(toggle);
+      section.appendChild(pastEntries);
+      container.appendChild(section);
+    }
+  }).catch(function (error) {
+    container.innerHTML = '<div class="empty-msg">Could not load schedule (' + error.message + ').</div>';
+  });
+}
+
+function formatDateLabel(dateStr) {
   var parts = dateStr.split('-');
-  var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-  var label = d.toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  return label;
+  var date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  return date.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-// Build a small horizontal bar showing grade out of 20, color-coded.
-// grade: number (0-20). Returns a DOM element.
-function buildGradeBar(grade) {
-  var track = document.createElement('div');
-  track.className = 'grade-bar-track';
-
-  var fill = document.createElement('div');
-  fill.className = 'grade-bar-fill';
-
-  var numGrade = parseFloat(grade);
-  if (isNaN(numGrade)) numGrade = 0;
-
-  var percent = Math.max(0, Math.min(100, (numGrade / 20) * 100));
-  fill.style.width = percent + '%';
-
-  var colorClass;
-  if (numGrade < 10) {
-    colorClass = 'grade-bar-fail';
-  } else if (numGrade < 12) {
-    colorClass = 'grade-bar-low';
-  } else if (numGrade < 14) {
-    colorClass = 'grade-bar-mid';
-  } else if (numGrade < 16) {
-    colorClass = 'grade-bar-good';
-  } else {
-    colorClass = 'grade-bar-great';
-  }
-  fill.classList.add(colorClass);
-
-  track.appendChild(fill);
-  return track;
-}
-
-// Shows the next upcoming class or exam (whichever comes first chronologically)
-// in a banner element. Expects both CSVs to have columns: date,start,end,course,type,room
-function loadNextEventBanner(classesCsvPath, examsCsvPath, bannerId) {
+function loadNextEventBanner(csvPath, bannerId) {
   var banner = document.getElementById(bannerId);
   if (!banner) return;
 
-  function fetchRows(path) {
-    return fetch(path + '?v=' + Date.now())
-      .then(function (response) {
-        if (!response.ok) return [];
-        return response.text();
-      })
-      .then(function (text) {
-        if (!text) return [];
-        return parseCSV(text);
-      })
-      .catch(function () { return []; });
-  }
-
-  Promise.all([fetchRows(classesCsvPath), fetchRows(examsCsvPath)])
-    .then(function (results) {
-      var classRows = results[0].map(function (r) { return Object.assign({}, r, { _kind: 'class' }); });
-      var examRows = results[1].map(function (r) { return Object.assign({}, r, { _kind: 'exam' }); });
-      var allRows = classRows.concat(examRows);
-
-      var now = new Date();
-      var todayStr = now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0');
-      var nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-      function toMinutes(hhmm) {
-        if (!hhmm) return 0;
-        var parts = hhmm.split(':');
-        return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-      }
-
-      // Keep only entries today (and still ending in the future) or in the future
-      var upcoming = allRows.filter(function (r) {
-        if (!r.date) return false;
-        if (r.date > todayStr) return true;
-        if (r.date === todayStr) {
-          var endMin = toMinutes(r.end || r.start);
-          return endMin > nowMinutes;
-        }
-        return false;
-      });
-
-      if (upcoming.length === 0) {
-        banner.style.display = 'none';
-        return;
-      }
-
-      upcoming.sort(function (a, b) {
-        if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-        return toMinutes(a.start) - toMinutes(b.start);
-      });
-
-      var next = upcoming[0];
-      var dateObj = new Date(next.date + 'T00:00:00');
-      var isToday = next.date === todayStr;
-
-      var dateLabel;
-      if (isToday) {
-        dateLabel = 'vandaag';
-      } else {
-        dateLabel = dateObj.toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long' });
-      }
-
-      var kindLabel = next._kind === 'exam' ? 'Volgend examen' : 'Volgende les';
-
-      banner.innerHTML = '';
-      banner.style.display = '';
-
-      var label = document.createElement('span');
-      label.className = 'next-event-label';
-      label.textContent = kindLabel + ': ';
-      banner.appendChild(label);
-
-      var detail = document.createElement('span');
-      detail.className = 'next-event-detail';
-      var text = next.course + ' \u00b7 ' + dateLabel + ' om ' + next.start;
-      if (next.room) text += ' \u00b7 ' + next.room;
-      detail.textContent = text;
-      banner.appendChild(detail);
-    })
-    .catch(function () {
+  fetchCleaningRows(csvPath).then(function (rows) {
+    var now = new Date();
+    var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+    var next = rows.filter(function (row) { return row.date >= today; })
+      .sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); })[0];
+    if (!next) {
       banner.style.display = 'none';
-    });
-}
-
-// Generic modal overlay for showing a title + list of label/value rows.
-// detailRows: array of {label, value} objects (value can be a string or a DOM node).
-// extraContent: optional DOM node appended after the detail rows (e.g. a breakdown table).
-function showDetailsOverlay(titleText, detailRows, extraContent) {
-  var overlay = document.createElement('div');
-  overlay.className = 'event-details-overlay';
-  overlay.tabIndex = -1;
-
-  var panel = document.createElement('div');
-  panel.className = 'event-details-panel';
-  panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-modal', 'true');
-
-  var closeButton = document.createElement('button');
-  closeButton.type = 'button';
-  closeButton.className = 'event-details-close';
-  closeButton.setAttribute('aria-label', 'Sluiten');
-  closeButton.innerHTML = '&times;';
-  panel.appendChild(closeButton);
-
-  var title = document.createElement('div');
-  title.className = 'event-details-title';
-  title.textContent = titleText || '';
-  panel.appendChild(title);
-
-  (detailRows || []).forEach(function (d) {
-    if (!d || (d.value === undefined || d.value === null || d.value === '')) return;
-    var row = document.createElement('div');
-    row.className = 'event-details-row';
-
-    var labelEl = document.createElement('span');
-    labelEl.className = 'event-details-label';
-    labelEl.textContent = d.label;
-    row.appendChild(labelEl);
-
-    var valueEl = document.createElement('span');
-    valueEl.className = 'event-details-value';
-    if (d.value instanceof Node) {
-      valueEl.appendChild(d.value);
-    } else {
-      valueEl.textContent = d.value;
+      return;
     }
-    row.appendChild(valueEl);
 
-    panel.appendChild(row);
-  });
-
-  if (extraContent) {
-    panel.appendChild(extraContent);
-  }
-
-  var info = document.createElement('div');
-  info.className = 'event-details-note';
-  info.textContent = 'Klik buiten het venster of op \u00d7 om te sluiten.';
-  panel.appendChild(info);
-
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
-
-  function closeDetails() {
-    if (overlay.parentNode) {
-      overlay.parentNode.removeChild(overlay);
-    }
-  }
-
-  closeButton.addEventListener('click', closeDetails);
-  overlay.addEventListener('click', function (e) {
-    if (e.target === overlay) {
-      closeDetails();
-    }
-  });
-
-  return overlay;
-}
-
-// Load results list with ECTS shown inline, and a click-to-expand breakdown
-// popup per course (sourced from results_breakdown.csv, joined by course name).
-function loadResultsList(resultsCsvPath, breakdownCsvPath, containerId) {
-  var container = document.getElementById(containerId);
-  var yearSelect = document.getElementById('year-filter');
-  var semesterSelect = document.getElementById('semester-filter');
-  if (!container || !yearSelect || !semesterSelect) return;
-
-  function fetchRows(path) {
-    return fetch(path + '?v=' + Date.now())
-      .then(function (response) {
-        if (!response.ok) return [];
-        return response.text();
-      })
-      .then(function (text) {
-        if (!text) return [];
-        return parseCSV(text);
-      })
-      .catch(function () { return []; });
-  }
-
-  Promise.all([fetchRows(resultsCsvPath), fetchRows(breakdownCsvPath)])
-    .then(function (results) {
-      var rows = results[0];
-      var breakdownRows = results[1];
-      if (rows.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nog geen gegevens.</div>';
-        return;
-      }
-
-      var breakdownByCourse = {};
-      breakdownRows.forEach(function (b) {
-        if (!b.course) return;
-        if (!breakdownByCourse[b.course]) breakdownByCourse[b.course] = [];
-        breakdownByCourse[b.course].push(b);
-      });
-
-      var years = [];
-      var semesters = [];
-      rows.forEach(function (row) {
-        var parsed = parsePeriod(row.period);
-        if (parsed.year && years.indexOf(parsed.year) === -1) years.push(parsed.year);
-        if (parsed.semester && semesters.indexOf(parsed.semester) === -1) semesters.push(parsed.semester);
-      });
-      years.sort();
-      semesters.sort();
-
-      function setOptions(select, values, label) {
-        select.innerHTML = '';
-        var emptyOption = document.createElement('option');
-        emptyOption.value = '';
-        emptyOption.textContent = label;
-        select.appendChild(emptyOption);
-        values.forEach(function (value) {
-          var option = document.createElement('option');
-          option.value = value;
-          option.textContent = value;
-          select.appendChild(option);
-        });
-      }
-
-      setOptions(yearSelect, years, 'Alle jaren');
-      setOptions(semesterSelect, semesters, 'Alle semesters');
-
-      function filterRows() {
-        var yearValue = yearSelect.value;
-        var semesterValue = semesterSelect.value;
-        return rows.filter(function (row) {
-          var parsed = parsePeriod(row.period);
-          if (yearValue && parsed.year !== yearValue) return false;
-          if (semesterValue && parsed.semester !== semesterValue) return false;
-          return true;
-        });
-      }
-
-      function renderRows(filteredRows) {
-        container.innerHTML = '';
-        if (filteredRows.length === 0) {
-          container.innerHTML = '<div class="empty-msg">Nog geen resultaten voor deze selectie.</div>';
-          return;
-        }
-
-        filteredRows.forEach(function (row) {
-          var card = document.createElement('div');
-          card.className = 'entry-card score-item';
-
-          var title = document.createElement('div');
-          title.className = 'title';
-          title.textContent = row.course;
-
-          var meta = document.createElement('div');
-          meta.className = 'meta';
-          var metaText = 'Score: ' + row.grade + ' / 20 \u00b7 ' + row.period;
-          if (row.ects) metaText += ' \u00b7 ' + row.ects + ' ECTS';
-          if (row.notes) metaText += ' \u00b7 ' + row.notes;
-          meta.textContent = metaText;
-
-          card.appendChild(title);
-          card.appendChild(meta);
-          card.appendChild(buildGradeBar(row.grade));
-
-          var components = breakdownByCourse[row.course];
-          if (components && components.length > 0) {
-            card.classList.add('has-breakdown');
-            card.tabIndex = 0;
-            card.setAttribute('role', 'button');
-
-            var hint = document.createElement('div');
-            hint.className = 'breakdown-hint';
-            hint.textContent = 'Tik voor detail van deelscores';
-            card.appendChild(hint);
-
-            function openBreakdown() {
-              var table = document.createElement('div');
-              table.className = 'breakdown-table';
-
-              components.forEach(function (c) {
-                var rowEl = document.createElement('div');
-                rowEl.className = 'breakdown-row';
-
-                var nameEl = document.createElement('span');
-                nameEl.className = 'breakdown-component';
-                nameEl.textContent = c.component;
-                rowEl.appendChild(nameEl);
-
-                var gradeEl = document.createElement('span');
-                gradeEl.className = 'breakdown-grade';
-                var gradeText = c.grade + ' / 20';
-                if (c.weight) gradeText += ' (' + c.weight + '%)';
-                gradeEl.textContent = gradeText;
-                rowEl.appendChild(gradeEl);
-
-                table.appendChild(rowEl);
-                table.appendChild(buildGradeBar(c.grade));
-              });
-
-              var detailRows = [
-                { label: 'Eindscore', value: row.grade + ' / 20' },
-                { label: 'Periode', value: row.period },
-                { label: 'ECTS', value: row.ects ? row.ects + ' studiepunten' : '' },
-                { label: 'Opmerking', value: row.notes }
-              ];
-
-              showDetailsOverlay(row.course, detailRows, table);
-            }
-
-            card.addEventListener('click', openBreakdown);
-            card.addEventListener('keydown', function (e) {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openBreakdown();
-              }
-            });
-          }
-
-          container.appendChild(card);
-        });
-      }
-
-      function applyFilters() {
-        var filteredRows = filterRows();
-        renderRows(filteredRows);
-        loadAverageScore(resultsCsvPath, 'avg-score', yearSelect.value, semesterSelect.value);
-        var input = document.getElementById('score-search');
-        if (input && input.value.trim() !== '') {
-          input.dispatchEvent(new Event('input'));
-        }
-      }
-
-      yearSelect.addEventListener('change', applyFilters);
-      semesterSelect.addEventListener('change', applyFilters);
-
-      applyFilters();
-    })
-    .catch(function () {
-      container.innerHTML = '<div class="empty-msg">Kon gegevens niet laden.</div>';
-    });
-}
-
-// Simple live search/filter for course or entry lists
-function setupSearch(inputId, itemSelector, emptyMsgId) {
-  var input = document.getElementById(inputId);
-  if (!input) return;
-  input.addEventListener('input', function () {
-    var query = input.value.trim().toLowerCase();
-    var items = document.querySelectorAll(itemSelector);
-    var visibleCount = 0;
-    items.forEach(function (item) {
-      var text = item.textContent.toLowerCase();
-      var match = text.indexOf(query) !== -1;
-      item.style.display = match ? '' : 'none';
-      if (match) visibleCount++;
-    });
-    var emptyMsg = document.getElementById(emptyMsgId);
-    if (emptyMsg) emptyMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+    var label = document.createElement('span');
+    label.className = 'next-event-label';
+    label.textContent = 'Next cleaners: ';
+    var detail = document.createElement('span');
+    detail.className = 'next-event-detail';
+    detail.textContent = formatDateLabel(next.date) + ' · Team ' + next.team + ' · ' +
+      [next.person1, next.person2].filter(Boolean).join(' & ');
+    banner.innerHTML = '';
+    banner.appendChild(label);
+    banner.appendChild(detail);
+    banner.style.display = '';
+  }).catch(function () {
+    banner.style.display = 'none';
   });
 }

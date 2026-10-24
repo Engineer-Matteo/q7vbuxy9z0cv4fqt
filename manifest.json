@@ -1,7 +1,7 @@
 {
-  "name": "Mijn VUB Overzicht",
-  "short_name": "VUB Overzicht",
-  "description": "Een persoonlijk overzicht van mijn VUB-lessen, examens en resultaten.",
+  "name": "X433 Dorm Overview",
+  "short_name": "X433",
+  "description": "A simple web-app used for dorm-related stuff",
   "icons": [
     {
       "src": "icon-192.png",
