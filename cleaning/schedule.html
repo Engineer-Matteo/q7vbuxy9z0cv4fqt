@@ -42,10 +42,12 @@
 
   </main>
 
+  <script src="swaps.js"></script>
   <script src="../script.js"></script>
+  <script src="../config.js"></script>
   <script>
     setupCleaningSchedule(
-      'schedule.csv',
+      window.DORM_APP_CONFIG.appsScriptUrl,
       'timetable-container',
       'schedule-list',
       'month-label',

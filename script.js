@@ -39,13 +39,32 @@ function splitCSVLine(line) {
 }
 
 function fetchCleaningRows(csvPath) {
-  return fetch(csvPath + '?v=' + Date.now()).then(function (response) {
-    if (!response.ok) throw new Error('CSV not found: ' + csvPath);
+  var requestUrl = csvPath;
+  var separator = requestUrl.indexOf('?') === -1 ? '?' : '&';
+  if (/^https?:\/\//i.test(requestUrl)) {
+    requestUrl += separator + 'type=cleaning&_=' + Date.now();
+  } else {
+    requestUrl += separator + 'v=' + Date.now();
+  }
+
+  return fetch(requestUrl, { cache: 'no-store' }).then(function (response) {
+    if (!response.ok) throw new Error('Could not fetch cleaning schedule (' + response.status + ').');
     return response.text();
-  }).then(parseCSV);
+  }).then(function (text) {
+    var rows = parseCSV(text);
+    if (rows.length > 0 && !Object.prototype.hasOwnProperty.call(rows[0], 'date')) {
+      throw new Error('The backend response is missing the required date column.');
+    }
+    return rows;
+  });
 }
 
 function setupCleaningSchedule(csvPath, calendarContainerId, listContainerId, labelId, prevId, nextId, controlsId) {
+  if (sessionStorage.getItem('dormAppPinVerified') !== 'true' || !sessionStorage.getItem('dormAppPin')) {
+    window.location.replace('../index.html');
+    return;
+  }
+
   var calendarBtn = document.getElementById('view-calendar');
   var listBtn = document.getElementById('view-list');
   var calendarEl = document.getElementById(calendarContainerId);
@@ -140,6 +159,8 @@ function loadCleaningMonthView(csvPath, containerId, labelId, prevId, nextId) {
           people.textContent = [row.person1, row.person2].filter(Boolean).join(' & ');
           event.appendChild(team);
           event.appendChild(people);
+          var swapButton = createCleaningSwapButton(row, rows, csvPath);
+          if (swapButton) event.appendChild(swapButton);
           cell.appendChild(event);
         });
         calendar.appendChild(cell);
@@ -194,6 +215,8 @@ function loadCleaningList(csvPath, containerId) {
         meta.textContent = [row.person1, row.person2].filter(Boolean).join(' & ');
         card.appendChild(title);
         card.appendChild(meta);
+        var swapButton = createCleaningSwapButton(row, rows, csvPath);
+        if (swapButton) card.appendChild(swapButton);
         target.appendChild(card);
       });
     }

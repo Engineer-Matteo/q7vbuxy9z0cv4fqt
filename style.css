@@ -71,6 +71,12 @@ header.top { position: relative; }
   font-size: 0.98em;
 }
 
+.welcome-message {
+  margin: 0 0 0.65em;
+  color: var(--vub-blue);
+  font-weight: 700;
+}
+
 .next-event-label {
   font-weight: 700;
   color: var(--vub-orange);
@@ -84,6 +90,66 @@ main {
   max-width: 640px;
   margin: 0 auto;
   padding: 1.2em;
+}
+
+#app-content[hidden] {
+  display: none;
+}
+
+.pin-gate {
+  width: min(100% - 2em, 420px);
+  margin: 12vh auto 0;
+  padding: 1.5em;
+  border-top: 5px solid var(--vub-orange);
+  background: var(--card-bg);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+.pin-gate h1 {
+  margin: 0 0 0.8em;
+  color: var(--vub-blue);
+  font-size: 1.35em;
+}
+
+#pin-form {
+  display: grid;
+  gap: 0.6em;
+}
+
+#pin-form label {
+  font-weight: 700;
+}
+
+#pin-form input {
+  min-height: 48px;
+  padding: 0.5em 0.7em;
+  border: 1px solid #9AA6B2;
+  border-radius: 4px;
+  font: inherit;
+  letter-spacing: 0.2em;
+}
+
+#pin-form button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--vub-blue);
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#pin-form button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+#pin-status {
+  min-height: 1.5em;
+  margin: 0;
+  color: #A32622;
+  font-size: 0.8em;
 }
 
 a.button-link, button.button-link {
@@ -507,6 +573,233 @@ main.wide {
 
 .cleaning-event + .cleaning-event {
   margin-top: 0.35em;
+}
+
+.cleaning-swap-button {
+  align-self: flex-start;
+  margin-top: 0.35em;
+  padding: 0.25em 0.5em;
+  border: 1px solid var(--vub-blue);
+  border-radius: 4px;
+  background: white;
+  color: var(--vub-blue);
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cleaning-swap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 1em;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.cleaning-swap-panel {
+  width: min(100%, 480px);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.25em;
+  background: var(--card-bg);
+  border-top: 5px solid var(--vub-orange);
+}
+
+.cleaning-swap-panel h2 {
+  margin: 0 0 0.8em;
+  font-size: 1.2em;
+}
+
+.cleaning-swap-form {
+  display: grid;
+  gap: 0.7em;
+}
+
+.cleaning-swap-form label {
+  display: grid;
+  gap: 0.25em;
+  font-size: 0.8em;
+  font-weight: 700;
+}
+
+.cleaning-swap-form label[hidden] {
+  display: none;
+}
+
+.cleaning-swap-form select {
+  min-height: 44px;
+  padding: 0.4em;
+  border: 1px solid #9AA6B2;
+  border-radius: 4px;
+  background: white;
+  color: var(--text);
+  font: inherit;
+}
+
+.cleaning-swap-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5em;
+  margin-top: 0.4em;
+}
+
+.cleaning-swap-actions button {
+  min-height: 44px;
+  padding: 0.4em 0.8em;
+  border: 0;
+  border-radius: 4px;
+  background: var(--vub-blue);
+  color: white;
+  font: inherit;
+  font-size: 0.8em;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cleaning-swap-actions .cleaning-swap-cancel {
+  border: 1px solid var(--vub-blue);
+  background: white;
+  color: var(--vub-blue);
+}
+
+.cleaning-swap-status {
+  min-height: 1.4em;
+  margin: 0;
+  color: #A32622;
+  font-size: 0.75em;
+}
+
+.oven-reservation-form {
+  margin-bottom: 1.5em;
+  padding: 1em;
+  border-left: 5px solid var(--vub-orange);
+  background: var(--card-bg);
+}
+
+.oven-reservation-form h2 {
+  margin: 0 0 0.75em;
+  font-size: 1.2em;
+}
+
+#reservation-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 0.75em;
+}
+
+#reservation-form label {
+  display: grid;
+  gap: 0.25em;
+  font-size: 0.8em;
+  font-weight: 700;
+}
+
+#reservation-form input,
+#reservation-form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.45em;
+  border: 1px solid #9AA6B2;
+  border-radius: 4px;
+  background: white;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9em;
+}
+
+#reservation-form button {
+  min-height: 44px;
+  padding: 0.5em 1em;
+  border: 0;
+  border-radius: 4px;
+  background: var(--vub-blue);
+  color: white;
+  font: inherit;
+  font-size: 0.8em;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#reservation-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+#reservation-status {
+  min-height: 1.4em;
+  margin: 0.5em 0 0;
+  color: var(--text-soft);
+  font-size: 0.75em;
+}
+
+.oven-calendar-scroll {
+  overflow-x: auto;
+}
+
+.oven-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(118px, 1fr));
+  min-width: 840px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 51, 153, 0.18);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.oven-day {
+  min-height: 250px;
+  padding: 0.6em;
+  border-right: 1px solid rgba(0, 51, 153, 0.12);
+  background: var(--card-bg);
+}
+
+.oven-day:last-child {
+  border-right: 0;
+}
+
+.oven-day.is-today {
+  background: rgba(255, 102, 0, 0.06);
+}
+
+.oven-day-header {
+  padding-bottom: 0.5em;
+  border-bottom: 2px solid var(--vub-blue);
+  color: var(--vub-blue);
+  font-weight: 700;
+}
+
+.oven-day.is-today .oven-day-header {
+  border-color: var(--vub-orange);
+}
+
+.oven-reservation {
+  margin-top: 0.6em;
+  padding: 0.55em;
+  border-left: 4px solid var(--vub-orange);
+  border-radius: 4px;
+  background: #EEF2FB;
+  color: var(--vub-blue);
+  font-size: 0.78em;
+  overflow-wrap: anywhere;
+}
+
+.oven-reservation-time {
+  display: block;
+  font-weight: 700;
+}
+
+@media (max-width: 650px) {
+  #reservation-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #reservation-form button {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 600px) {

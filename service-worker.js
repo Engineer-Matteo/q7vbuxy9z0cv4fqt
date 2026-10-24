@@ -1,4 +1,4 @@
-var CACHE_NAME = 'vub-overzicht-cache-v1';
+var CACHE_NAME = 'vub-overzicht-cache-v2';
 var ASSETS = [
   './',
   './index.html',
@@ -34,6 +34,31 @@ self.addEventListener('activate', function (event) {
 });
 
 self.addEventListener('fetch', function (event) {
+  var requestUrl = new URL(event.request.url);
+  var ovenReservationAsset = /\/oven\/reservations\.(html|js|json)$/.test(requestUrl.pathname);
+
+  if (ovenReservationAsset && event.request.method === 'GET') {
+    event.respondWith(
+      fetch(event.request).then(function (response) {
+        if (response && response.status === 200 && response.type === 'basic') {
+          var responseClone = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      }).catch(function () {
+        return caches.match(event.request).then(function (cached) {
+          return cached || new Response('Reservation data unavailable offline.', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       if (cached) return cached;
