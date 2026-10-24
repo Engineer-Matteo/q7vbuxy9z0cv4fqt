@@ -166,6 +166,47 @@ function loadCleaningMonthView(csvPath, containerId, labelId, prevId, nextId) {
         calendar.appendChild(cell);
       }
       container.appendChild(calendar);
+
+      var agenda = document.createElement('div');
+      agenda.className = 'cleaning-agenda';
+      var monthStartKey = toYMD(monthStart);
+      var monthEndKey = toYMD(monthEnd);
+      var monthRows = rows.filter(function (row) {
+        return row.date >= monthStartKey && row.date <= monthEndKey;
+      }).sort(function (a, b) {
+        return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0);
+      });
+
+      if (monthRows.length === 0) {
+        var emptyAgenda = document.createElement('div');
+        emptyAgenda.className = 'empty-msg';
+        emptyAgenda.textContent = 'No cleaning duties this month.';
+        agenda.appendChild(emptyAgenda);
+      } else {
+        monthRows.forEach(function (row) {
+          var item = document.createElement('article');
+          item.className = 'cleaning-agenda-item';
+
+          var dateLabel = document.createElement('h2');
+          dateLabel.textContent = formatDateLabel(row.date);
+          item.appendChild(dateLabel);
+
+          var assignment = document.createElement('p');
+          assignment.className = 'cleaning-agenda-assignment';
+          var teamLabel = document.createElement('strong');
+          teamLabel.textContent = 'Team ' + (row.team || '');
+          var peopleLabel = document.createElement('span');
+          peopleLabel.textContent = [row.person1, row.person2].filter(Boolean).join(' & ');
+          assignment.appendChild(teamLabel);
+          assignment.appendChild(peopleLabel);
+          item.appendChild(assignment);
+
+          var swapButton = createCleaningSwapButton(row, rows, csvPath);
+          if (swapButton) item.appendChild(swapButton);
+          agenda.appendChild(item);
+        });
+      }
+      container.appendChild(agenda);
     }
 
     renderMonth();
