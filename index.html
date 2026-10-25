@@ -30,6 +30,7 @@
 
     <main>
       <p id="welcome-message" class="welcome-message"></p>
+      <div id="cleaning-done-banner" class="cleaning-done-banner" role="status" aria-live="polite" hidden></div>
       <div id="next-cleaner-banner" class="next-cleaner-banner" style="display:none;"></div>
 
       <a class="button-link" href="cleaning/schedule.html">
@@ -49,9 +50,11 @@
   <script src="auth.js"></script>
   <script>
     setupPinGate(window.DORM_APP_CONFIG.appsScriptUrl, function () {
+      setupPageActions(window.DORM_APP_CONFIG.appsScriptUrl);
       var welcomeMessage = document.getElementById('welcome-message');
       var username = sessionStorage.getItem('dormAppUser');
       welcomeMessage.textContent = username ? 'Welcome ' + username : 'Welcome';
+      setupCleaningDoneBanner(window.DORM_APP_CONFIG.appsScriptUrl, 'cleaning-done-banner');
       loadNextEventBanner(window.DORM_APP_CONFIG.appsScriptUrl, 'next-cleaner-banner');
       prepareUserExperienceLink(window.DORM_APP_CONFIG.appsScriptUrl, function (experienceUrl) {
         if (experienceUrl) window.location.href = experienceUrl;

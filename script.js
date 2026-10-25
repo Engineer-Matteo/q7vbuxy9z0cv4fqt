@@ -332,3 +332,215 @@ function loadNextEventBanner(csvPath, bannerId) {
     banner.style.display = 'none';
   });
 }
+
+function setupCleaningDoneBanner(appsScriptUrl, bannerId) {
+  var banner = document.getElementById(bannerId);
+  var pin = sessionStorage.getItem('dormAppPin');
+  if (!banner || !pin || !appsScriptUrl) return;
+
+  var now = new Date();
+  var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0');
+
+  function requestCleaningStatus(action) {
+    return fetch(appsScriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        pin: pin,
+        action: action,
+        date: today
+      })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Could not check cleaning status.');
+      return response.json();
+    }).then(function (result) {
+      if (!result || result.status !== 'success') {
+        throw new Error(result && result.message ? result.message : 'Could not check cleaning status.');
+      }
+      return result;
+    });
+  }
+
+  function showCompleted(message) {
+    banner.replaceChildren();
+    var text = document.createElement('span');
+    text.textContent = message;
+    banner.appendChild(text);
+    banner.hidden = false;
+  }
+
+  requestCleaningStatus('cleaning-status').then(function (result) {
+    if (!result.hasDuty) return;
+    if (result.completed) {
+      showCompleted('Job well done! Your cleaning for today is marked complete.');
+      return;
+    }
+
+    banner.replaceChildren();
+    var prompt = document.createElement('span');
+    prompt.textContent = 'You are on the cleaning team today.';
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'cleaning-done-button';
+    button.textContent = 'Mark cleaning as done';
+    button.addEventListener('click', function () {
+      button.disabled = true;
+      button.textContent = 'Saving...';
+      requestCleaningStatus('mark-cleaning-done').then(function (saved) {
+        if (!saved.hasDuty || !saved.completed) {
+          throw new Error('Could not confirm the cleaning was marked complete.');
+        }
+        showCompleted('Job well done! Your cleaning for today is marked complete.');
+        window.alert('Job well done! Your cleaning has been marked as complete.');
+      }).catch(function (error) {
+        button.disabled = false;
+        button.textContent = 'Mark cleaning as done';
+        window.alert(error.message || 'Could not mark cleaning as done. Please try again.');
+      });
+    });
+    banner.appendChild(prompt);
+    banner.appendChild(button);
+    banner.hidden = false;
+  }).catch(function () {
+    showCompleted("Could not check today's cleaning status. Please refresh the page to try again.");
+  });
+}
+
+function setupPageActions(appsScriptUrl) {
+  if (sessionStorage.getItem('dormAppPinVerified') !== 'true' || !sessionStorage.getItem('dormAppPin')) return;
+
+  var header = document.querySelector('header.top');
+  var title = header && header.querySelector('h1');
+  if (!header || !title || header.querySelector('.page-actions')) return;
+
+  var actions = document.createElement('div');
+  actions.className = 'page-actions';
+
+  var feedbackButton = document.createElement('button');
+  feedbackButton.type = 'button';
+  feedbackButton.className = 'page-action-button';
+  feedbackButton.textContent = 'Report a bug / suggest a feature';
+
+  var logoutButton = document.createElement('button');
+  logoutButton.type = 'button';
+  logoutButton.className = 'page-action-button page-action-logout';
+  logoutButton.textContent = 'Log out';
+
+  actions.appendChild(feedbackButton);
+  actions.appendChild(logoutButton);
+  header.insertBefore(actions, header.querySelector('.stripe'));
+
+  logoutButton.addEventListener('click', function () {
+    sessionStorage.removeItem('dormAppPinVerified');
+    sessionStorage.removeItem('dormAppPin');
+    sessionStorage.removeItem('dormAppUser');
+    var script = document.querySelector('script[src$="script.js"]');
+    window.location.replace(new URL('index.html', script.src).href);
+  });
+
+  var dialog = document.createElement('dialog');
+  dialog.className = 'feedback-dialog';
+  dialog.setAttribute('aria-labelledby', 'feedback-dialog-title');
+
+  var form = document.createElement('form');
+  form.className = 'feedback-form';
+  var heading = document.createElement('h2');
+  heading.id = 'feedback-dialog-title';
+  heading.textContent = 'Send feedback';
+  form.appendChild(heading);
+
+  var typeLabel = document.createElement('label');
+  typeLabel.textContent = 'What would you like to report?';
+  var typeInput = document.createElement('select');
+  typeInput.name = 'feedbackType';
+  var bugOption = document.createElement('option');
+  bugOption.value = 'Bug report';
+  bugOption.textContent = 'Report a bug';
+  var featureOption = document.createElement('option');
+  featureOption.value = 'Feature suggestion';
+  featureOption.textContent = 'Suggest a feature';
+  typeInput.appendChild(bugOption);
+  typeInput.appendChild(featureOption);
+  typeLabel.appendChild(typeInput);
+  form.appendChild(typeLabel);
+
+  var messageLabel = document.createElement('label');
+  messageLabel.textContent = 'Describe it';
+  var messageInput = document.createElement('textarea');
+  messageInput.name = 'message';
+  messageInput.required = true;
+  messageInput.maxLength = 10000;
+  messageInput.rows = 6;
+  messageInput.placeholder = 'Tell us what happened or what you would like to see.';
+  messageLabel.appendChild(messageInput);
+  form.appendChild(messageLabel);
+
+  var status = document.createElement('p');
+  status.className = 'feedback-status';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  form.appendChild(status);
+
+  var formActions = document.createElement('div');
+  formActions.className = 'feedback-form-actions';
+  var cancelButton = document.createElement('button');
+  cancelButton.type = 'button';
+  cancelButton.textContent = 'Cancel';
+  var submitButton = document.createElement('button');
+  submitButton.type = 'submit';
+  submitButton.textContent = 'Send';
+  formActions.appendChild(cancelButton);
+  formActions.appendChild(submitButton);
+  form.appendChild(formActions);
+  dialog.appendChild(form);
+  document.body.appendChild(dialog);
+
+  feedbackButton.addEventListener('click', function () {
+    status.textContent = '';
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+  });
+  cancelButton.addEventListener('click', function () {
+    dialog.close();
+  });
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (!appsScriptUrl) {
+      status.textContent = 'Feedback sending is not configured. Please try again later.';
+      return;
+    }
+
+    submitButton.disabled = true;
+    status.textContent = 'Sending feedback...';
+    fetch(appsScriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        pin: sessionStorage.getItem('dormAppPin'),
+        action: 'feedback',
+        feedbackType: typeInput.value,
+        message: messageInput.value,
+        page: document.title
+      })
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Feedback could not be sent.');
+      return response.json();
+    }).then(function (result) {
+      if (!result || result.status !== 'success' || result.feedbackSent !== true) {
+        throw new Error(result && result.message
+          ? result.message
+          : 'Feedback sending is not enabled on the deployed Apps Script. Deploy backend_script.gs and try again.');
+      }
+      form.reset();
+      dialog.close();
+      window.alert('Thank you. Your feedback has been sent.');
+    }).catch(function (error) {
+      status.textContent = error && error.message
+        ? error.message
+        : 'Could not send feedback. Please check your connection and try again.';
+    }).finally(function () {
+      submitButton.disabled = false;
+    });
+  });
+}
