@@ -383,10 +383,14 @@ function setupCleaningDoneBanner(appsScriptUrl, bannerId) {
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'cleaning-done-button';
-    button.textContent = 'Mark cleaning as done';
+    button.textContent = '\u2713';
+    button.setAttribute('aria-label', 'Mark cleaning as done');
+    button.title = 'Mark cleaning as done';
     button.addEventListener('click', function () {
       button.disabled = true;
-      button.textContent = 'Saving...';
+      button.textContent = '\u2026';
+      button.setAttribute('aria-label', 'Saving cleaning completion');
+      button.title = 'Saving cleaning completion';
       requestCleaningStatus('mark-cleaning-done').then(function (saved) {
         if (!saved.hasDuty || !saved.completed) {
           throw new Error('Could not confirm the cleaning was marked complete.');
@@ -395,7 +399,9 @@ function setupCleaningDoneBanner(appsScriptUrl, bannerId) {
         window.alert('Job well done! Your cleaning has been marked as complete.');
       }).catch(function (error) {
         button.disabled = false;
-        button.textContent = 'Mark cleaning as done';
+        button.textContent = '\u2713';
+        button.setAttribute('aria-label', 'Mark cleaning as done');
+        button.title = 'Mark cleaning as done';
         window.alert(error.message || 'Could not mark cleaning as done. Please try again.');
       });
     });
@@ -414,18 +420,51 @@ function setupPageActions(appsScriptUrl) {
   var title = header && header.querySelector('h1');
   if (!header || !title || header.querySelector('.page-actions')) return;
 
+  function createActionIcon(paths) {
+    var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.setAttribute('focusable', 'false');
+    paths.forEach(function (pathData) {
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathData);
+      icon.appendChild(path);
+    });
+    return icon;
+  }
+
   var actions = document.createElement('div');
   actions.className = 'page-actions';
 
   var feedbackButton = document.createElement('button');
   feedbackButton.type = 'button';
   feedbackButton.className = 'page-action-button';
-  feedbackButton.textContent = 'Report a bug / suggest a feature';
+  feedbackButton.appendChild(createActionIcon([
+    'M9 7.13v-1a3 3 0 0 1 6 0v1',
+    'M12 20v-6',
+    'M2 12h2',
+    'M20 12h2',
+    'M3 18h2',
+    'M19 18h2',
+    'M3 6h2',
+    'M19 6h2',
+    'M6 12a6 6 0 0 0 12 0V8H6z',
+    'm8 2 2 2',
+    'm14 4 2-2'
+  ]));
+  feedbackButton.setAttribute('aria-label', 'Report a bug or suggest a feature');
+  feedbackButton.title = 'Report a bug or suggest a feature';
 
   var logoutButton = document.createElement('button');
   logoutButton.type = 'button';
   logoutButton.className = 'page-action-button page-action-logout';
-  logoutButton.textContent = 'Log out';
+  logoutButton.appendChild(createActionIcon([
+    'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4',
+    'm16 17 5-5-5-5',
+    'M21 12H9'
+  ]));
+  logoutButton.setAttribute('aria-label', 'Log out');
+  logoutButton.title = 'Log out';
 
   actions.appendChild(feedbackButton);
   actions.appendChild(logoutButton);
