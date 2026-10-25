@@ -48,16 +48,31 @@ header.top h1 {
 }
 
 .page-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
   min-height: 44px;
-  padding: 0.45em 0.75em;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 8px;
   background: transparent;
   color: white;
   font: inherit;
-  font-size: 0.72em;
+  font-size: 1.1em;
   font-weight: 700;
   cursor: pointer;
+}
+
+.page-action-button svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .page-action-button:active {
@@ -215,13 +230,15 @@ header.top { position: relative; }
 
 .cleaning-done-button {
   flex-shrink: 0;
+  width: 44px;
   min-height: 40px;
-  padding: 0.35em 0.65em;
+  padding: 0;
   border: 0;
   border-radius: 6px;
   background: var(--vub-blue);
   color: white;
   font: inherit;
+  font-size: 1.2em;
   font-weight: 700;
   cursor: pointer;
 }
@@ -636,13 +653,14 @@ h2 {
   }
 
   .page-actions {
-    width: 100%;
-    margin-left: 0;
+    width: auto;
+    margin-left: auto;
   }
 
   .page-action-button {
-    flex: 1;
-    font-size: 0.68em;
+    flex: 0 0 44px;
+    width: 44px;
+    font-size: 1.1em;
   }
 
   .cleaning-done-banner {
