@@ -76,8 +76,8 @@ function prepareTestingSurveyLink(appsScriptUrl, onReady, onError) {
     if (!result || result.status !== 'success') {
       throw new Error('Apps Script rejected the survey access request. Please log in again.');
     }
-    if (result.user !== 'Testing') {
-      throw new Error('The survey is only available to the Testing account.');
+    if (result.user !== 'Mirthe') {
+      throw new Error('The survey is only available to one very special user.');
     }
     if (!result.surveyTicket) {
       throw new Error('The Apps Script deployment is missing the survey-ticket changes. Update backend_script.gs and deploy a new web app version.');
