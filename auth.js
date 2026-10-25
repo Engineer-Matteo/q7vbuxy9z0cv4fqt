@@ -57,3 +57,40 @@ function setupPinGate(appsScriptUrl, onAuthenticated) {
     });
   });
 }
+
+function prepareTestingSurveyLink(appsScriptUrl, onReady, onError) {
+  var pin = sessionStorage.getItem('dormAppPin');
+  if (!appsScriptUrl || !pin) {
+    if (typeof onError === 'function') onError('Could not prepare the survey. Please log in again.');
+    return;
+  }
+
+  fetch(appsScriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ pin: pin, type: 'oven', action: 'survey-ticket' })
+  }).then(function (response) {
+    if (!response.ok) throw new Error('Survey access could not be prepared.');
+    return response.json();
+  }).then(function (result) {
+    if (!result || result.status !== 'success') {
+      throw new Error('Apps Script rejected the survey access request. Please log in again.');
+    }
+    if (result.user !== 'Testing') {
+      throw new Error('The survey is only available to the Testing account.');
+    }
+    if (!result.surveyTicket) {
+      throw new Error('The Apps Script deployment is missing the survey-ticket changes. Update backend_script.gs and deploy a new web app version.');
+    }
+    var separator = appsScriptUrl.indexOf('?') === -1 ? '?' : '&';
+    var surveyUrl = appsScriptUrl + separator + 'page=testing-survey&ticket=' +
+      encodeURIComponent(result.surveyTicket);
+    if (typeof onReady === 'function') onReady(surveyUrl);
+  }).catch(function (error) {
+    if (typeof onError === 'function') {
+      onError(error && error.message
+        ? error.message
+        : 'Could not contact Apps Script. Check the deployment URL and try logging in again.');
+    }
+  });
+}
