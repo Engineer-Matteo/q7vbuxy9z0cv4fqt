@@ -53,13 +53,11 @@
       var username = sessionStorage.getItem('dormAppUser');
       welcomeMessage.textContent = username ? 'Welcome ' + username : 'Welcome';
       loadNextEventBanner(window.DORM_APP_CONFIG.appsScriptUrl, 'next-cleaner-banner');
-      if (username === 'Mirthe') {
-        prepareTestingSurveyLink(window.DORM_APP_CONFIG.appsScriptUrl, function (surveyUrl) {
-          window.location.href = surveyUrl;
-        }, function (message) {
-          window.alert(message);
-        });
-      }
+      prepareUserExperienceLink(window.DORM_APP_CONFIG.appsScriptUrl, function (experienceUrl) {
+        if (experienceUrl) window.location.href = experienceUrl;
+      }, function (message) {
+        window.alert(message);
+      });
     });
   </script>
 </body>

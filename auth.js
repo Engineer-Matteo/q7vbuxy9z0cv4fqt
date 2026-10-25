@@ -58,7 +58,7 @@ function setupPinGate(appsScriptUrl, onAuthenticated) {
   });
 }
 
-function prepareTestingSurveyLink(appsScriptUrl, onReady, onError) {
+function prepareUserExperienceLink(appsScriptUrl, onReady, onError) {
   var pin = sessionStorage.getItem('dormAppPin');
   if (!appsScriptUrl || !pin) {
     if (typeof onError === 'function') onError('Could not prepare the survey. Please log in again.');
@@ -68,7 +68,7 @@ function prepareTestingSurveyLink(appsScriptUrl, onReady, onError) {
   fetch(appsScriptUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ pin: pin, type: 'oven', action: 'survey-ticket' })
+    body: JSON.stringify({ pin: pin, type: 'oven', action: 'user-experience-ticket' })
   }).then(function (response) {
     if (!response.ok) throw new Error('Survey access could not be prepared.');
     return response.json();
@@ -76,15 +76,16 @@ function prepareTestingSurveyLink(appsScriptUrl, onReady, onError) {
     if (!result || result.status !== 'success') {
       throw new Error('Apps Script rejected the survey access request. Please log in again.');
     }
-    if (result.user !== 'Mirthe') {
-      throw new Error('The survey is only available to one very special user.');
+    if (result.experienceRouting !== true) {
+      throw new Error('The deployed Apps Script does not have the generic user-experience routing changes yet. Update backend_script.gs and deploy a new web app version.');
     }
-    if (!result.surveyTicket) {
-      throw new Error('The Apps Script deployment is missing the survey-ticket changes. Update backend_script.gs and deploy a new web app version.');
+    if (!result.experienceTicket) {
+      if (typeof onReady === 'function') onReady(null);
+      return;
     }
     var separator = appsScriptUrl.indexOf('?') === -1 ? '?' : '&';
-    var surveyUrl = appsScriptUrl + separator + 'page=testing-survey&ticket=' +
-      encodeURIComponent(result.surveyTicket);
+    var surveyUrl = appsScriptUrl + separator + 'page=user-experience&ticket=' +
+      encodeURIComponent(result.experienceTicket);
     if (typeof onReady === 'function') onReady(surveyUrl);
   }).catch(function (error) {
     if (typeof onError === 'function') {
